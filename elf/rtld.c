@@ -439,9 +439,27 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
   return start_addr;
 }
 
+#ifndef NESTING
+#ifdef DONT_USE_BOOTSTRAP_MAP
+# define bootstrap_map GL(dl_rtld_map)
+#else
+struct dl_start_final_info info;
+# define bootstrap_map info.l
+#endif
+
+  /* This #define produces dynamic linking inline functions for
+     bootstrap relocation instead of general-purpose relocation.
+     Since ld.so must not have any undefined symbols the result
+     is trivial: always the map of ld.so itself.  */
+#define RTLD_BOOTSTRAP
+#define RESOLVE_MAP(sym, version, flags) (&bootstrap_map)
+#include "dynamic-link.h"
+#endif /* n NESTING */
+
 static ElfW(Addr) __attribute_used__
 _dl_start (void *arg)
 {
+#ifdef NESTING
 #ifdef DONT_USE_BOOTSTRAP_MAP
 # define bootstrap_map GL(dl_rtld_map)
 #else
@@ -457,6 +475,7 @@ _dl_start (void *arg)
 #define BOOTSTRAP_MAP (&bootstrap_map)
 #define RESOLVE_MAP(sym, version, flags) BOOTSTRAP_MAP
 #include "dynamic-link.h"
+#endif /* NESTING */
 
   if (HP_TIMING_INLINE && HP_SMALL_TIMING_AVAIL)
 #ifdef DONT_USE_BOOTSTRAP_MAP
@@ -2785,3 +2804,18 @@ print_statistics (hp_timing_t *rtld_total_timep)
     }
 #endif
 }
+
+#ifndef NESTING
+char *dummy1 = (char *)elf_get_dynamic_info;
+# if ! ELF_MACHINE_NO_REL
+char *dummy2 = (char *)elf_machine_rel;
+char *dummy3 = (char *)elf_machine_rel_relative;
+#endif
+# if ! ELF_MACHINE_NO_RELA
+char *dummy4 = (char *)elf_machine_rela;
+char *dummy5 = (char *)elf_machine_rela_relative;
+#endif
+# if ELF_MACHINE_NO_RELA || defined ELF_MACHINE_PLT_REL
+char *dummy6 = (char *)elf_machine_lazy_rel;
+#endif
+#endif
