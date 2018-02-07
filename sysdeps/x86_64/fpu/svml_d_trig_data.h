@@ -61,9 +61,12 @@
 #define __dSignMask             __lNZero
 
 .macro double_vector offset value
+/* clang integrated assembler doesn't think subtract yields an absolute, skip.  */
+#if !defined(__clang__)
 .if .-__svml_d_trig_data != \offset
 .err
 .endif
+#endif
 .rept 8
 .quad \value
 .endr
