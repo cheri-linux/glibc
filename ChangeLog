@@ -1,3 +1,8 @@
+2018-08-06  Andreas Schwab  <schwab@suse.de>
+
+	* sysdeps/riscv/nptl/tls.h (DB_THREAD_SELF): Use REGISTER instead
+	of CONST_THREAD_AREA.
+
 2019-06-06  Florian Weimer  <fweimer@redhat.com>
 
 	* sysdeps/unix/sysv/linux/riscv/flush-icache.c: Do not use
