@@ -109,6 +109,7 @@ LEAF (__start_context)
 	mv	a0, s2
 	beqz	s2, 1f
 	jal	__setcontext
-1:	j	exit
+1:	la	t0, exit
+	jr	t0
 
 PSEUDO_END (__start_context)

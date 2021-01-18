@@ -21,7 +21,8 @@
 
 ENTRY (_setjmp)
   li	a1, 0
-  j	__sigsetjmp
+  la	t0, __sigsetjmp
+  jr	t0
 END (_setjmp)
 ENTRY (setjmp)
   li	a1, 1
