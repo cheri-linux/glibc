@@ -83,8 +83,16 @@ typedef struct
   (((tcbhead_t *) (tcbp))[-1].dtv)
 
 /* Code to initially initialize the thread pointer.  */
+#ifdef __clang__
+# define TLS_INIT_TP(tcbp) \
+  ({ __asm__ volatile ("addi %0, %0, %1\t\n" \
+                       "mv tp, %0" \
+                       : \
+                       : "r" (tcbp), "I" (TLS_TCB_OFFSET)); NULL; })
+#else
 # define TLS_INIT_TP(tcbp) \
   ({ __thread_self = (char*)tcbp + TLS_TCB_OFFSET; NULL; })
+#endif
 
 /* Return the address of the dtv for the current thread.  */
 # define THREAD_DTV() \
