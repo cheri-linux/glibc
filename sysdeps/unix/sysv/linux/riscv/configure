@@ -140,12 +140,13 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 __SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
 
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "4 8 8" >/dev/null 2>&1; then :
-  libc_cv_riscv_int_abi=lp64
-fi
-rm -f conftest*
+#_ACEOF
+#if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+#  $EGREP "4 8 8" >/dev/null 2>&1; then :
+#  libc_cv_riscv_int_abi=lp64
+#fi
+#rm -f conftest*
+libc_cv_riscv_int_abi=lp64
 
 if test $libc_cv_riscv_int_abi = no; then
   as_fn_error $? "Unable to determine integer ABI" "$LINENO" 5
