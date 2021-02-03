@@ -306,7 +306,8 @@ struct _IO_FILE_complete
   size_t __pad5;
   int _mode;
   /* Make sure we don't get into trouble again.  */
-  char _unused2[15 * sizeof (int) - 4 * sizeof (void *) - sizeof (size_t)];
+  // TODO: Calculate total padding
+  char _unused2[15 * sizeof (int) - 2 * sizeof (void *) - sizeof (size_t)];
 #endif
 };
 
