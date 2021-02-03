@@ -184,7 +184,8 @@ if test $libc_cv_riscv_float_abi = no; then
 fi
 
 config_vars="$config_vars
-default-abi = $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi"
+default-abi = lp64d
+#default-abi = $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi"
 
 case $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi-$machine in
 lp64-riscv/rv64/*)
