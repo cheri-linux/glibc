@@ -23,7 +23,11 @@
 #endif
 
 ENTRY (__syscall_error)
+#ifdef __CHERI_PURE_CAPABILITY__
+	cmove ct0, cra
+#else
 	mv t0, ra
+#endif
 	/* Fall through to __syscall_set_errno.  */
 END (__syscall_error)
 
@@ -35,6 +39,7 @@ ENTRY (__syscall_set_errno)
 	li t1, -4096
 	bleu a0, t1, 1f
 	neg a0, a0
+#ifndef __CHERI_PURE_CAPABILITY__
 #if RTLD_PRIVATE_ERRNO
 	sw a0, rtld_errno, t1
 #elif defined(__PIC__)
@@ -48,4 +53,22 @@ ENTRY (__syscall_set_errno)
 #endif
 	li a0, -1
 1:	jr t0
+#else // __CHERI_PURE_CAPABILITY__
+#if RTLD_PRIVATE_ERRNO
+	sw a0, rtld_errno, t1
+#elif defined(__PIC__)
+	//la.tls.ie t1, errno
+	// no idea if that's working
+2:	auipcc ct1, %tls_ie_pcrel_hi(errno)
+	cld t1, %pcrel_lo(2b)(ct1)
+	cincoffset ct1, ctp, t1 //, %tprel_add(errno)
+	csw a0, 0(ct1)
+#else
+	lui t1, %tprel_hi(errno)
+	cincoffset ct1, ctp, t1 //, %tprel_add(errno)
+	csw a0, %tprel_lo(errno)(ct1)
+#endif
+	li a0, -1
+1:	cjr ct0
+#endif
 END (__syscall_set_errno)
