@@ -84,11 +84,19 @@ typedef struct
 
 /* Code to initially initialize the thread pointer.  */
 #ifdef __clang__
+#ifndef __CHERI_PURE_CAPABILITY__
 # define TLS_INIT_TP(tcbp) \
   ({ __asm__ volatile ("addi %0, %0, %1\t\n" \
                        "mv tp, %0" \
                        : \
                        : "r" (tcbp), "I" (TLS_TCB_OFFSET)); NULL; })
+#else // __CHERI_PURE_CAPABILITY__
+# define TLS_INIT_TP(tcbp) \
+  ({ __asm__ volatile ("cincoffset %0, %0, %1\t\n" \
+                       "cmove ctp, %0" \
+                       : \
+                       : "C" (tcbp), "I" (TLS_TCB_OFFSET)); NULL; })
+#endif
 #else
 # define TLS_INIT_TP(tcbp) \
   ({ __thread_self = (char*)tcbp + TLS_TCB_OFFSET; NULL; })
