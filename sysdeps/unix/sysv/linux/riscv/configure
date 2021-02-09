@@ -140,13 +140,23 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 __SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
 
-#_ACEOF
-#if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-#  $EGREP "4 8 8" >/dev/null 2>&1; then :
-#  libc_cv_riscv_int_abi=lp64
-#fi
-#rm -f conftest*
-libc_cv_riscv_int_abi=lp64
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "4 8 8" >/dev/null 2>&1; then :
+  libc_cv_riscv_int_abi=lp64
+fi
+rm -f conftest*
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "4 8 16" >/dev/null 2>&1; then :
+  libc_cv_riscv_int_abi=l64pc128
+fi
+rm -f conftest*
 
 if test $libc_cv_riscv_int_abi = no; then
   as_fn_error $? "Unable to determine integer ABI" "$LINENO" 5
@@ -184,8 +194,7 @@ if test $libc_cv_riscv_float_abi = no; then
 fi
 
 config_vars="$config_vars
-default-abi = lp64d
-#default-abi = $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi"
+default-abi = $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi"
 
 case $libc_cv_riscv_int_abi$libc_cv_riscv_float_abi-$machine in
 lp64-riscv/rv64/*)

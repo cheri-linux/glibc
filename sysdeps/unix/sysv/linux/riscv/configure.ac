@@ -4,12 +4,14 @@ GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
 
 arch_minimum_kernel=4.15.0
 
-libc_cv_riscv_int_abi=lp64
-#AC_EGREP_CPP(4 8 8, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
-#  ], libc_cv_riscv_int_abi=lp64)
-#if test $libc_cv_riscv_int_abi = no; then
-#  AC_MSG_ERROR([Unable to determine integer ABI])
-#fi
+libc_cv_riscv_int_abi=no
+AC_EGREP_CPP(4 8 8, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
+  ], libc_cv_riscv_int_abi=lp64)
+AC_EGREP_CPP(4 8 16, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
+  ], libc_cv_riscv_int_abi=l64pc128)
+if test $libc_cv_riscv_int_abi = no; then
+  AC_MSG_ERROR([Unable to determine integer ABI])
+fi
 
 libc_cv_riscv_float_abi=no
 AC_EGREP_CPP(yes, [#ifdef __riscv_float_abi_double
