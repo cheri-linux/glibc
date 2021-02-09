@@ -20,6 +20,7 @@
 #include <sys/asm.h>
 
 ENTRY (__longjmp)
+#ifndef __CHERI_PURE_CAPABILITY__
 	REG_L ra,  0*SZREG(a0)
 	REG_L s0,  1*SZREG(a0)
 	REG_L s1,  2*SZREG(a0)
@@ -53,5 +54,40 @@ ENTRY (__longjmp)
 	seqz a0, a1
 	add  a0, a0, a1   # a0 = (a1 == 0) ? 1 : a1
 	ret
+#else //__CHERI_PURE_CAPABILITY__
+	CREG_L cra,  0*SZCREG(ca0)
+	CREG_L cs0,  1*SZCREG(ca0)
+	CREG_L cs1,  2*SZCREG(ca0)
+	CREG_L cs2,  3*SZCREG(ca0)
+	CREG_L cs3,  4*SZCREG(ca0)
+	CREG_L cs4,  5*SZCREG(ca0)
+	CREG_L cs5,  6*SZCREG(ca0)
+	CREG_L cs6,  7*SZCREG(ca0)
+	CREG_L cs7,  8*SZCREG(ca0)
+	CREG_L cs8,  9*SZCREG(ca0)
+	CREG_L cs9, 10*SZCREG(ca0)
+	CREG_L cs10,11*SZCREG(ca0)
+	CREG_L cs11,12*SZCREG(ca0)
+	CREG_L csp, 13*SZCREG(ca0)
+
+#ifndef __riscv_float_abi_soft
+	FREG_L fs0, 14*SZCREG+ 0*SZFREG(ca0)
+	FREG_L fs1, 14*SZCREG+ 1*SZFREG(ca0)
+	FREG_L fs2, 14*SZCREG+ 2*SZFREG(ca0)
+	FREG_L fs3, 14*SZCREG+ 3*SZFREG(ca0)
+	FREG_L fs4, 14*SZCREG+ 4*SZFREG(ca0)
+	FREG_L fs5, 14*SZCREG+ 5*SZFREG(ca0)
+	FREG_L fs6, 14*SZCREG+ 6*SZFREG(ca0)
+	FREG_L fs7, 14*SZCREG+ 7*SZFREG(ca0)
+	FREG_L fs8, 14*SZCREG+ 8*SZFREG(ca0)
+	FREG_L fs9, 14*SZCREG+ 9*SZFREG(ca0)
+	FREG_L fs10,14*SZCREG+10*SZFREG(ca0)
+	FREG_L fs11,14*SZCREG+11*SZFREG(ca0)
+#endif
+
+	seqz a0, a1
+	add  a0, a0, a1   # a0 = (a1 == 0) ? 1 : a1
+	cret
+#endif // __CHERI_PURE_CAPABILITY__
 
 END (__longjmp)

@@ -64,7 +64,7 @@ ENTRY (ENTRY_POINT)
 	cmove    ca5, ca0  /* rtld_fini.  */
 	/* main may be in a shared library.  */
 	cllc   ca0, main
-	CREG_L a1, 0(csp)      /* argc.  */
+	REG_L a1, 0(csp)      /* argc.  */
    // the following might be unaligned... (SZREG is 8 at the moment)
 
    /* argv */

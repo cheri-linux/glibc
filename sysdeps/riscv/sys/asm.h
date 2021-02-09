@@ -21,13 +21,18 @@
 
 /* Macros to handle different pointer/register sizes for 32/64-bit code.  */
 #if __riscv_xlen == 64
-# define PTRLOG 3
 # define SZREG	8
+#ifndef __CHERI_PURE_CAPABILITY__
+# define PTRLOG 3
 # define REG_S sd
 # define REG_L ld
-#ifdef __CHERI_PURE_CAPABILITY__
-# define CREG_S csd
-# define CREG_L cld
+#else
+# define PTRLOG 4
+# define REG_S csd
+# define REG_L cld
+# define CREG_S csc
+# define CREG_L clc
+# define SZCREG	16
 #endif
 #elif __riscv_xlen == 32
 # error "rv32i-based targets are not supported"
@@ -39,12 +44,13 @@
 /* For ABI uniformity, reserve 8 bytes for floats, even if double-precision
    floating-point is not supported in hardware.  */
 # if defined __riscv_float_abi_double
+#  define SZFREG 8
+#ifndef __CHERI_PURE_CAPABILITY__
 #  define FREG_L fld
 #  define FREG_S fsd
-#  define SZFREG 8
-#ifdef __CHERI_PURE_CAPABILITY__
-# define CFREG_S cfsd
-# define CFREG_L cfld
+#else
+# define FREG_S cfsd
+# define FREG_L cfld
 #endif
 # else
 #  error unsupported FLEN

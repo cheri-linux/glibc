@@ -19,6 +19,7 @@
 #include <sysdep.h>
 #include <sys/asm.h>
 
+#ifndef __CHERI_PURE_CAPABILITY__
 ENTRY (_setjmp)
   li	a1, 0
   la	t0, __sigsetjmp
@@ -68,6 +69,58 @@ ENTRY (__sigsetjmp)
   j __sigjmp_save
 #endif
 
+#else // __CHERI_PURE_CAPABILITY__
+ENTRY (_setjmp)
+  li	a1, 0
+  clgc	ct0, __sigsetjmp
+  cjr	ct0
+END (_setjmp)
+ENTRY (setjmp)
+  li	a1, 1
+  /* Fallthrough */
+END (setjmp)
+ENTRY (__sigsetjmp)
+	CREG_S cra,  0*SZCREG(ca0)
+	CREG_S cs0,  1*SZCREG(ca0)
+	CREG_S cs1,  2*SZCREG(ca0)
+	CREG_S cs2,  3*SZCREG(ca0)
+	CREG_S cs3,  4*SZCREG(ca0)
+	CREG_S cs4,  5*SZCREG(ca0)
+	CREG_S cs5,  6*SZCREG(ca0)
+	CREG_S cs6,  7*SZCREG(ca0)
+	CREG_S cs7,  8*SZCREG(ca0)
+	CREG_S cs8,  9*SZCREG(ca0)
+	CREG_S cs9, 10*SZCREG(ca0)
+	CREG_S cs10,11*SZCREG(ca0)
+	CREG_S cs11,12*SZCREG(ca0)
+	CREG_S csp, 13*SZCREG(ca0)
+
+#ifndef __riscv_float_abi_soft
+	FREG_S fs0, 14*SZCREG+ 0*SZFREG(ca0)
+	FREG_S fs1, 14*SZCREG+ 1*SZFREG(ca0)
+	FREG_S fs2, 14*SZCREG+ 2*SZFREG(ca0)
+	FREG_S fs3, 14*SZCREG+ 3*SZFREG(ca0)
+	FREG_S fs4, 14*SZCREG+ 4*SZFREG(ca0)
+	FREG_S fs5, 14*SZCREG+ 5*SZFREG(ca0)
+	FREG_S fs6, 14*SZCREG+ 6*SZFREG(ca0)
+	FREG_S fs7, 14*SZCREG+ 7*SZFREG(ca0)
+	FREG_S fs8, 14*SZCREG+ 8*SZFREG(ca0)
+	FREG_S fs9, 14*SZCREG+ 9*SZFREG(ca0)
+	FREG_S fs10,14*SZCREG+10*SZFREG(ca0)
+	FREG_S fs11,14*SZCREG+11*SZFREG(ca0)
+#endif
+
+#if !IS_IN (libc) && IS_IN (rtld)
+  /* In ld.so we never save the signal mask.  */
+  li a0, 0
+  cret
+#else
+  /* Make a tail call to __sigjmp_save; it takes the same args.  */
+  cllc ct0, __sigjmp_save
+  cjr ct0
+#endif
+
+#endif // __CHERI_PURE_CAPABILITY__
 
 END (__sigsetjmp)
 
