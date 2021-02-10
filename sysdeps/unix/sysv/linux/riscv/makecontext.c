@@ -21,19 +21,21 @@
 #include <sys/ucontext.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <inttypes.h>
 
 void
 __makecontext (ucontext_t *ucp, void (*func) (void), int argc,
-	       long int a0, long int a1, long int a2, long int a3, long int a4,
+	       intptr_t a0, intptr_t a1, intptr_t a2, intptr_t a3, intptr_t a4,
 	       ...)
 {
   extern void __start_context (void) attribute_hidden;
-  long int i, sp;
+  long int i;
+  intptr_t sp;
 
   _Static_assert (REG_NARGS == 8, "__makecontext assumes 8 argument registers");
 
   /* Set up the stack.  */
-  sp = ((long int) ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ALMASK;
+  sp = ((intptr_t) ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ALMASK;
 
   /* Set up the register context.
      ra = s0 = 0, terminating the stack for backtracing purposes.
@@ -41,10 +43,10 @@ __makecontext (ucontext_t *ucp, void (*func) (void), int argc,
      s2 = the subsequent context to run.  */
   ucp->uc_mcontext.__gregs[REG_RA] = 0;
   ucp->uc_mcontext.__gregs[REG_S0] = 0;
-  ucp->uc_mcontext.__gregs[REG_S1] = (long int) func;
-  ucp->uc_mcontext.__gregs[REG_S2] = (long int) ucp->uc_link;
+  ucp->uc_mcontext.__gregs[REG_S1] = (intptr_t) func;
+  ucp->uc_mcontext.__gregs[REG_S2] = (intptr_t) ucp->uc_link;
   ucp->uc_mcontext.__gregs[REG_SP] = sp;
-  ucp->uc_mcontext.__gregs[REG_PC] = (long int) &__start_context;
+  ucp->uc_mcontext.__gregs[REG_PC] = (intptr_t) &__start_context;
 
   /* Put args in a0-a7, then put any remaining args on the stack.  */
   ucp->uc_mcontext.__gregs[REG_A0 + 0] = a0;
@@ -60,15 +62,15 @@ __makecontext (ucontext_t *ucp, void (*func) (void), int argc,
 
       long reg_args = argc < REG_NARGS ? argc : REG_NARGS;
       for (i = 5; i < reg_args; i++)
-        ucp->uc_mcontext.__gregs[REG_A0 + i] = va_arg (vl, long);
+        ucp->uc_mcontext.__gregs[REG_A0 + i] = va_arg (vl, intptr_t);
 
       long int stack_args = argc - reg_args;
       if (stack_args > 0)
 	{
-	  sp = (sp - stack_args * sizeof (long int)) & ALMASK;
+	  sp = (sp - stack_args * sizeof (intptr_t)) & ALMASK;
 	  ucp->uc_mcontext.__gregs[REG_SP] = sp;
 	  for (i = 0; i < stack_args; i++)
-	    ((long int *) sp)[i] = va_arg (vl, long int);
+	    ((intptr_t *) sp)[i] = va_arg (vl, intptr_t);
 	}
 
       va_end (vl);

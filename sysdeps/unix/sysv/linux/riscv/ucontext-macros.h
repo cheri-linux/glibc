@@ -46,4 +46,16 @@
   RESTORE_INT_REG (name, num, base);			\
   cfi_offset (name, (num) * SZREG + MCONTEXT_GREGS)
 
+#ifdef __CHERI_PURE_CAPABILITY__
+#define SAVE_CAP_REG(name, num, base)			\
+  CREG_S name, ((num) * SZCREG + MCONTEXT_GREGS)(base)
+
+#define RESTORE_CAP_REG(name, num, base)		\
+  CREG_L name, ((num) * SZCREG + MCONTEXT_GREGS)(base)
+
+#define RESTORE_CAP_REG_CFI(name, num, base)		\
+  RESTORE_CAP_REG (name, num, base);			\
+  cfi_offset (name, (num) * SZCREG + MCONTEXT_GREGS)
+#endif
+
 #endif /* _LINUX_RISCV_UCONTEXT_MACROS_H */

@@ -22,6 +22,7 @@
 
 	.text
 LEAF (__getcontext)
+#ifndef __CHERI_PURE_CAPABILITY__
 	SAVE_INT_REG (ra,   0, a0)
 	SAVE_INT_REG (ra,   1, a0)
 	SAVE_INT_REG (sp,   2, a0)
@@ -38,10 +39,29 @@ LEAF (__getcontext)
 	SAVE_INT_REG (s9,  25, a0)
 	SAVE_INT_REG (s10, 26, a0)
 	SAVE_INT_REG (s11, 27, a0)
+#else // __CHERI_PURE_CAPABILITY__
+	SAVE_CAP_REG (cra,   0, ca0)
+	SAVE_CAP_REG (cra,   1, ca0)
+	SAVE_CAP_REG (csp,   2, ca0)
+	SAVE_CAP_REG (cs0,   8, ca0)
+	SAVE_CAP_REG (cs1,   9, ca0)
+	SAVE_CAP_REG (c0,  10, ca0)	/* return 0 by overwriting a0.  */
+	SAVE_CAP_REG (cs2,  18, ca0)
+	SAVE_CAP_REG (cs3,  19, ca0)
+	SAVE_CAP_REG (cs4,  20, ca0)
+	SAVE_CAP_REG (cs5,  21, ca0)
+	SAVE_CAP_REG (cs6,  22, ca0)
+	SAVE_CAP_REG (cs7,  23, ca0)
+	SAVE_CAP_REG (cs8,  24, ca0)
+	SAVE_CAP_REG (cs9,  25, ca0)
+	SAVE_CAP_REG (cs10, 26, ca0)
+	SAVE_CAP_REG (cs11, 27, ca0)
+#endif
 
 #ifndef __riscv_float_abi_soft
-	frsr	a1
+	frsr	a1 /* read fcsr */
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	SAVE_FP_REG (fs0,   8, a0)
 	SAVE_FP_REG (fs1,   9, a0)
 	SAVE_FP_REG (fs2,  18, a0)
@@ -54,11 +74,29 @@ LEAF (__getcontext)
 	SAVE_FP_REG (fs9,  25, a0)
 	SAVE_FP_REG (fs10, 26, a0)
 	SAVE_FP_REG (fs11, 27, a0)
-
+	
 	sw	a1, MCONTEXT_FSR(a0)
+
+#else
+	SAVE_FP_REG (fs0,   8, ca0)
+	SAVE_FP_REG (fs1,   9, ca0)
+	SAVE_FP_REG (fs2,  18, ca0)
+	SAVE_FP_REG (fs3,  19, ca0)
+	SAVE_FP_REG (fs4,  20, ca0)
+	SAVE_FP_REG (fs5,  21, ca0)
+	SAVE_FP_REG (fs6,  22, ca0)
+	SAVE_FP_REG (fs7,  23, ca0)
+	SAVE_FP_REG (fs8,  24, ca0)
+	SAVE_FP_REG (fs9,  25, ca0)
+	SAVE_FP_REG (fs10, 26, ca0)
+	SAVE_FP_REG (fs11, 27, ca0)
+
+	csw	a1, MCONTEXT_FSR(ca0)
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #endif /* __riscv_float_abi_soft */
 
 /* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
+#ifndef __CHERI_PURE_CAPABILITY__
 	li	a3, _NSIG8
 	add     a2, a0, UCONTEXT_SIGMASK
 	mv	a1, zero
@@ -71,6 +109,21 @@ LEAF (__getcontext)
 	ret
 
 99:	j	__syscall_error
+#else /* __CHERI_PURE_CAPABILITY__ */
+	li	a3, _NSIG8
+	cincoffset ca2, ca0, UCONTEXT_SIGMASK
+	cmove	ca1, cnull
+	li	a0, SIG_BLOCK
+
+	li	a7, SYS_ify (rt_sigprocmask)
+	scall
+	bltz	a0, 99f
+
+	cret
+
+99:	cllc	ct0, __syscall_error
+	cjr		ct0
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 PSEUDO_END (__getcontext)
 

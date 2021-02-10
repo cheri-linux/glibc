@@ -21,6 +21,7 @@
 /* int swapcontext (ucontext_t *oucp, const ucontext_t *ucp) */
 
 LEAF (__swapcontext)
+#ifndef __CHERI_PURE_CAPABILITY__
 	mv	t0, a1			/* Save ucp into t0.  */
 
 	SAVE_INT_REG (ra,   0, a0)
@@ -119,6 +120,109 @@ LEAF (__swapcontext)
 
 
 99:	j	__syscall_error
+
+#else /* __CHERI_PURE_CAPABILITY__ */
+	cmove	ct0, ca1			/* Save ucp into ct0.  */
+
+	SAVE_CAP_REG (cra,   0, ca0)
+	SAVE_CAP_REG (cra,   1, ca0)
+	SAVE_CAP_REG (csp,   2, ca0)
+	SAVE_CAP_REG (cs0,   8, ca0)
+	SAVE_CAP_REG (cs1,   9, ca0)
+	SAVE_CAP_REG (c0,  10, ca0)	/* return 0 by overwriting a0.  */
+	SAVE_CAP_REG (cs2,  18, ca0)
+	SAVE_CAP_REG (cs3,  19, ca0)
+	SAVE_CAP_REG (cs4,  20, ca0)
+	SAVE_CAP_REG (cs5,  21, ca0)
+	SAVE_CAP_REG (cs6,  22, ca0)
+	SAVE_CAP_REG (cs7,  23, ca0)
+	SAVE_CAP_REG (cs8,  24, ca0)
+	SAVE_CAP_REG (cs9,  25, ca0)
+	SAVE_CAP_REG (cs10, 26, ca0)
+	SAVE_CAP_REG (cs11, 27, ca0)
+
+#ifndef __riscv_float_abi_soft
+	frsr a1
+
+	SAVE_FP_REG (fs0,   8, ca0)
+	SAVE_FP_REG (fs1,   9, ca0)
+	SAVE_FP_REG (fs2,  18, ca0)
+	SAVE_FP_REG (fs3,  19, ca0)
+	SAVE_FP_REG (fs4,  20, ca0)
+	SAVE_FP_REG (fs5,  21, ca0)
+	SAVE_FP_REG (fs6,  22, ca0)
+	SAVE_FP_REG (fs7,  23, ca0)
+	SAVE_FP_REG (fs8,  24, ca0)
+	SAVE_FP_REG (fs9,  25, ca0)
+	SAVE_FP_REG (fs10, 26, ca0)
+	SAVE_FP_REG (fs11, 27, ca0)
+
+	csw	a1, MCONTEXT_FSR(ca0)
+#endif /* __riscv_float_abi_soft */
+
+/* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, &oucp->uc_sigmask, _NSIG8) */
+	li	a3, _NSIG8
+	cincoffset ca2, ca0, UCONTEXT_SIGMASK
+	cincoffset ca1, ct0, UCONTEXT_SIGMASK
+	li	a0, SIG_SETMASK
+
+	li	a7, SYS_ify (rt_sigprocmask)
+	scall
+
+	bltz	a0, 99f
+
+#ifndef __riscv_float_abi_soft
+	clw	t1, MCONTEXT_FSR(ct0)
+
+	RESTORE_FP_REG (fs0,   8, ct0)
+	RESTORE_FP_REG (fs1,   9, ct0)
+	RESTORE_FP_REG (fs2,  18, ct0)
+	RESTORE_FP_REG (fs3,  19, ct0)
+	RESTORE_FP_REG (fs4,  20, ct0)
+	RESTORE_FP_REG (fs5,  21, ct0)
+	RESTORE_FP_REG (fs6,  22, ct0)
+	RESTORE_FP_REG (fs7,  23, ct0)
+	RESTORE_FP_REG (fs8,  24, ct0)
+	RESTORE_FP_REG (fs9,  25, ct0)
+	RESTORE_FP_REG (fs10, 26, ct0)
+	RESTORE_FP_REG (fs11, 27, ct0)
+
+	fssr	t1
+#endif /* __riscv_float_abi_soft */
+
+	/* Note the contents of argument registers will be random
+	   unless makecontext() has been called.  */
+	RESTORE_CAP_REG (ct1,   0, ct0)
+	RESTORE_CAP_REG (cra,   1, ct0)
+	RESTORE_CAP_REG (csp,   2, ct0)
+	RESTORE_CAP_REG (cs0,   8, ct0)
+	RESTORE_CAP_REG (cs1,   9, ct0)
+	RESTORE_CAP_REG (ca0,  10, ct0)
+	RESTORE_CAP_REG (ca1,  11, ct0)
+	RESTORE_CAP_REG (ca2,  12, ct0)
+	RESTORE_CAP_REG (ca3,  13, ct0)
+	RESTORE_CAP_REG (ca4,  14, ct0)
+	RESTORE_CAP_REG (ca5,  15, ct0)
+	RESTORE_CAP_REG (ca6,  16, ct0)
+	RESTORE_CAP_REG (ca7,  17, ct0)
+	RESTORE_CAP_REG (cs2,  18, ct0)
+	RESTORE_CAP_REG (cs3,  19, ct0)
+	RESTORE_CAP_REG (cs4,  20, ct0)
+	RESTORE_CAP_REG (cs5,  21, ct0)
+	RESTORE_CAP_REG (cs6,  22, ct0)
+	RESTORE_CAP_REG (cs7,  23, ct0)
+	RESTORE_CAP_REG (cs8,  24, ct0)
+	RESTORE_CAP_REG (cs9,  25, ct0)
+	RESTORE_CAP_REG (cs10, 26, ct0)
+	RESTORE_CAP_REG (cs11, 27, ct0)
+
+	cjr	ct1
+
+
+99:	cllc	ct1, __syscall_error
+	cjr		ct1
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 PSEUDO_END (__swapcontext)
 
