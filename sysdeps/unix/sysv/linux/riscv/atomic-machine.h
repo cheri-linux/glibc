@@ -176,12 +176,24 @@ typedef uintmax_t uatomic_max_t;
     abort ();							\
   __tmp; })
 
+#ifndef __CHERI_PURE_CAPABILITY__
 # define atomic_max(mem, value) asm_amo ("amomaxu", ".aq", mem, value)
 # define atomic_min(mem, value) asm_amo ("amominu", ".aq", mem, value)
 
 # define atomic_bit_test_set(mem, bit)                   \
   ({ typeof (*mem) __mask = (typeof (*mem))1 << (bit);    \
      asm_amo ("amoor", ".aq", mem, __mask) & __mask; })
+
+#else /* __CHERI_PURE_CAPABILITY__ */
+
+# define atomic_max(mem, value) asm_amo ("camomaxu", ".aq", mem, value)
+# define atomic_min(mem, value) asm_amo ("camominu", ".aq", mem, value)
+
+# define atomic_bit_test_set(mem, bit)                   \
+  ({ typeof (*mem) __mask = (typeof (*mem))1 << (bit);    \
+     asm_amo ("camoor", ".aq", mem, __mask) & __mask; })
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 # define catomic_exchange_and_add(mem, value)		\
   atomic_exchange_and_add (mem, value)

@@ -522,7 +522,7 @@
 
 #ifndef atomic_forced_read
 # define atomic_forced_read(x) \
-  ({ __typeof (x) __x; __asm ("" : "=r" (__x) : "0" (x)); __x; })
+  ({ __typeof (x) __x; __asm ("" : "=A" (__x) : "0" (x)); __x; })
 #endif
 
 /* This is equal to 1 iff the architecture supports 64b atomic operations.  */
