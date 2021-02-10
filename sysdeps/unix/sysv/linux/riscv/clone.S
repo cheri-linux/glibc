@@ -32,6 +32,7 @@
 	.text
 LEAF (__clone)
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	/* Sanity check arguments.  */
 	beqz		a0,L (invalid)	/* No NULL function pointers.  */
 	beqz		a1,L (invalid)	/* No NULL stack pointers.  */
@@ -61,6 +62,40 @@ L (invalid):
 	/* Something bad happened -- no child created.  */
 L (error):
 	j		__syscall_error
+#else // __CHERI_PURE_CAPABILITY__
+
+	/* Sanity check arguments.  */
+	/* TODO Cheri do we need to compare to cnull? */
+	beqz		a0,L (invalid)	/* No NULL function pointers.  */
+	beqz		a1,L (invalid)	/* No NULL stack pointers.  */
+
+	cincoffset		ca1,ca1,-32	/* Reserve argument save space.  */
+	CREG_S		ca0,0(ca1)	/* Save function pointer.  */
+	CREG_S		ca3,SZCREG(ca1)	/* Save argument pointer.  */
+
+	/* The syscall expects the args to be in different slots.  */
+	cmove		ca0,ca2
+	cmove		ca2,ca4
+	cmove		ca3,ca5
+	cmove		ca4,ca6
+
+	/* Do the system call.  */
+	li		a7,__NR_clone
+	scall
+
+	bltz		a0,L (error)
+	beqz		a0,L (thread_start)
+
+	/* Successful return from the parent.  */
+	cret
+
+L (invalid):
+	li		a0, -EINVAL
+	/* Something bad happened -- no child created.  */
+L (error):
+	cllc 	ct0, __syscall_error
+	cjr		ct0
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	END (__clone)
 
 /* Load up the arguments to the function.  Put this block of code in
@@ -69,6 +104,7 @@ L (error):
 
 ENTRY (__thread_start)
 L (thread_start):
+#ifndef __CHERI_PURE_CAPABILITY__
 	/* Restore the arg for user's function.  */
 	REG_L		a1,0(sp)	/* Function pointer.  */
 	REG_L		a0,SZREG(sp)	/* Argument pointer.  */
@@ -80,6 +116,19 @@ L (thread_start):
 	li		a7, __NR_exit
 	scall
 
+#else // __CHERI_PURE_CAPABILITY__
+	/* Restore the arg for user's function.  */
+	CREG_L		ca1,0(csp)	/* Function pointer.  */
+	CREG_L		ca0,SZCREG(csp)	/* Argument pointer.  */
+
+	/* Call the user's function.  */
+	cjalr		ca1
+
+	/* Call exit with the function's return value.  */
+	li		a7, __NR_exit
+	scall
+
+#endif // __CHERI_PURE_CAPABILITY__
 	END (__thread_start)
 
 libc_hidden_def (__clone)
