@@ -27,12 +27,8 @@
 #include <bits/types/stack_t.h>
 #include <inttypes.h>
 
-#ifndef __CHERI_PURE_CAPABILITY__
-typedef unsigned long int __riscv_mc_gp_state[32];
-#else
+/* TODO in kernel ucontext has 33 registers, added DDC */
 typedef uintptr_t __riscv_mc_gp_state[32];
-#endif
-
 
 #ifdef __USE_MISC
 # define NGREG	32
@@ -47,12 +43,7 @@ typedef uintptr_t __riscv_mc_gp_state[32];
 # define REG_S2 18
 # define REG_NARGS 8
 
-#ifndef __CHERI_PURE_CAPABILITY__
-typedef unsigned long int greg_t;
-#else
 typedef uintptr_t greg_t;
-#endif
-
 
 /* Container for all general registers.  */
 typedef __riscv_mc_gp_state gregset_t;
