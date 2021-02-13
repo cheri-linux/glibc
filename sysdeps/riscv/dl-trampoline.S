@@ -23,13 +23,22 @@
 /* Assembler veneer called from the PLT header code for lazy loading.
    The PLT header passes its own args in t0-t2.  */
 
+#ifndef __CHERI_PURE_CAPABILITY__
 #ifdef __riscv_float_abi_soft
 # define FRAME_SIZE (-((-10 * SZREG) & ALMASK))
 #else
 # define FRAME_SIZE (-((-10 * SZREG - 8 * SZFREG) & ALMASK))
 #endif
+#else /* __CHERI_PURE_CAPABILITY__ */
+#ifdef __riscv_float_abi_soft
+# define FRAME_SIZE (-((-10 * SZCREG) & ALMASK))
+#else
+# define FRAME_SIZE (-((-10 * SZCREG - 8 * SZFREG) & ALMASK))
+#endif
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 ENTRY (_dl_runtime_resolve)
+#ifndef __CHERI_PURE_CAPABILITY__
   # Save arguments to stack.
   addi sp, sp, -FRAME_SIZE
   REG_S ra, 9*SZREG(sp)
@@ -87,4 +96,65 @@ ENTRY (_dl_runtime_resolve)
 
   # Invoke the callee.
   jr t1
+
+#else /* __CHERI_PURE_CAPABILITY__ */
+  # Save arguments to stack.
+  cincoffset csp, csp, -FRAME_SIZE
+  CREG_S cra, 9*SZREG(csp)
+  CREG_S ca0, 1*SZREG(csp)
+  CREG_S ca1, 2*SZREG(csp)
+  CREG_S ca2, 3*SZREG(csp)
+  CREG_S ca3, 4*SZREG(csp)
+  CREG_S ca4, 5*SZREG(csp)
+  CREG_S ca5, 6*SZREG(csp)
+  CREG_S ca6, 7*SZREG(csp)
+  CREG_S ca7, 8*SZREG(csp)
+
+#ifndef __riscv_float_abi_soft
+  FREG_S fa0, (10*SZCREG + 0*SZFREG)(csp)
+  FREG_S fa1, (10*SZCREG + 1*SZFREG)(csp)
+  FREG_S fa2, (10*SZCREG + 2*SZFREG)(csp)
+  FREG_S fa3, (10*SZCREG + 3*SZFREG)(csp)
+  FREG_S fa4, (10*SZCREG + 4*SZFREG)(csp)
+  FREG_S fa5, (10*SZCREG + 5*SZFREG)(csp)
+  FREG_S fa6, (10*SZCREG + 6*SZFREG)(csp)
+  FREG_S fa7, (10*SZCREG + 7*SZFREG)(csp)
+#endif
+
+  # Update .got.plt and obtain runtime address of callee.
+  slli a1, t1, 1
+  cmove ca0, ct0       # link map
+  add a1, a1, t1  # reloc offset (== thrice the .got.plt offset)
+  cllc ca2, _dl_fixup
+  cjalr ca2
+  cmove ct1, ca0
+
+  # Restore arguments from stack.
+  CREG_L cra, 9*SZCREG(csp)
+  CREG_L ca0, 1*SZCREG(csp)
+  CREG_L ca1, 2*SZCREG(csp)
+  CREG_L ca2, 3*SZCREG(csp)
+  CREG_L ca3, 4*SZCREG(csp)
+  CREG_L ca4, 5*SZCREG(csp)
+  CREG_L ca5, 6*SZCREG(csp)
+  CREG_L ca6, 7*SZCREG(csp)
+  CREG_L ca7, 8*SZCREG(csp)
+
+#ifndef __riscv_float_abi_soft
+  FREG_L fa0, (10*SZCREG + 0*SZFREG)(csp)
+  FREG_L fa1, (10*SZCREG + 1*SZFREG)(csp)
+  FREG_L fa2, (10*SZCREG + 2*SZFREG)(csp)
+  FREG_L fa3, (10*SZCREG + 3*SZFREG)(csp)
+  FREG_L fa4, (10*SZCREG + 4*SZFREG)(csp)
+  FREG_L fa5, (10*SZCREG + 5*SZFREG)(csp)
+  FREG_L fa6, (10*SZCREG + 6*SZFREG)(csp)
+  FREG_L fa7, (10*SZCREG + 7*SZFREG)(csp)
+#endif
+
+  cincoffset csp, csp, FRAME_SIZE
+
+  # Invoke the callee.
+  cjr ct1
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 END (_dl_runtime_resolve)
