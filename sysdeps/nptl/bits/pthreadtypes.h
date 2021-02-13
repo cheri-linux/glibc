@@ -19,6 +19,8 @@
 #ifndef _BITS_PTHREADTYPES_COMMON_H
 # define _BITS_PTHREADTYPES_COMMON_H	1
 
+#include <inttypes.h>
+
 /* For internal mutex and condition variable definitions.  */
 #include <bits/thread-shared-types.h>
 
@@ -56,7 +58,7 @@ typedef int __ONCE_ALIGNMENT pthread_once_t;
 union pthread_attr_t
 {
   char __size[__SIZEOF_PTHREAD_ATTR_T];
-  long int __align;
+  uintptr_t __align;
 };
 #ifndef __have_pthread_attr_t
 typedef union pthread_attr_t pthread_attr_t;
@@ -68,7 +70,7 @@ typedef union
 {
   struct __pthread_mutex_s __data;
   char __size[__SIZEOF_PTHREAD_MUTEX_T];
-  long int __align;
+  uintptr_t __align;
 } pthread_mutex_t;
 
 

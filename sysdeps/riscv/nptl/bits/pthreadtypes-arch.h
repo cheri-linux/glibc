@@ -22,8 +22,13 @@
 #include <endian.h>
 
 #if __riscv_xlen == 64
+# ifndef __CHERI_PURE_CAPABILITY__
 # define __SIZEOF_PTHREAD_ATTR_T 		56
 # define __SIZEOF_PTHREAD_MUTEX_T 		40
+# else /* __CHERI_PURE_CAPABILITY__ */
+# define __SIZEOF_PTHREAD_ATTR_T 		96
+# define __SIZEOF_PTHREAD_MUTEX_T 		64
+# endif
 # define __SIZEOF_PTHREAD_MUTEXATTR_T 		 4
 # define __SIZEOF_PTHREAD_COND_T 		48
 # define __SIZEOF_PTHREAD_CONDATTR_T 		 4
