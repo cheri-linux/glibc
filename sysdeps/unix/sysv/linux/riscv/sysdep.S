@@ -55,6 +55,7 @@ ENTRY (__syscall_set_errno)
 1:	jr t0
 #else // __CHERI_PURE_CAPABILITY__
 #if RTLD_PRIVATE_ERRNO
+	/* TODO Cheri: adapt this */
 	sw a0, rtld_errno, t1
 #elif defined(__PIC__)
 	//la.tls.ie t1, errno
