@@ -116,8 +116,9 @@ ENTRY (__sigsetjmp)
   cret
 #else
   /* Make a tail call to __sigjmp_save; it takes the same args.  */
-  cllc ct0, __sigjmp_save
-  cjr ct0
+  j __sigjmp_save
+  //cllc ct0, __sigjmp_save
+  //cjr ct0
 #endif
 
 #endif // __CHERI_PURE_CAPABILITY__

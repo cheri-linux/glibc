@@ -24,10 +24,9 @@
 #include <linux/sched.h>
 #include <asm/signal.h>
 
-#ifndef __CHERI_PURE_CAPABILITY__
 	.text
 LEAF (__libc_vfork)
-
+#ifndef __CHERI_PURE_CAPABILITY__
 	li	a0, (CLONE_VFORK | CLONE_VM | SIGCHLD)
 	mv	a1, sp
 
@@ -36,13 +35,7 @@ LEAF (__libc_vfork)
 
 	bltz	a0, 1f
 	ret
-1:	j		__syscall_error
-END (__libc_vfork)
-
 #else // __CHERI_PURE_CAPABILITY__
-	.text
-LEAF (__libc_vfork)
-
 	li	a0, (CLONE_VFORK | CLONE_VM | SIGCHLD)
 	cmove	ca1, csp
 
@@ -51,10 +44,10 @@ LEAF (__libc_vfork)
 
 	bltz	a0, 1f
 	cret
+#endif /* __CHERI_PURE_CAPABILITY__ */
 1:	j		__syscall_error
-END (__libc_vfork)
-#endif
 
+END (__libc_vfork)
 
 weak_alias (__libc_vfork, vfork)
 strong_alias (__libc_vfork, __vfork)

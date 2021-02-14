@@ -93,8 +93,9 @@ L (invalid):
 	li		a0, -EINVAL
 	/* Something bad happened -- no child created.  */
 L (error):
-	cllc 	ct0, __syscall_error
-	cjr		ct0
+	j __syscall_error
+	//cllc 	ct0, __syscall_error
+	//cjr		ct0
 #endif /* __CHERI_PURE_CAPABILITY__ */
 	END (__clone)
 

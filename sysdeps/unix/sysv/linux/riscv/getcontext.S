@@ -121,8 +121,9 @@ LEAF (__getcontext)
 
 	cret
 
-99:	cllc	ct0, __syscall_error
-	cjr		ct0
+99:	j	__syscall_error
+	//cllc	ct0, __syscall_error
+	//cjr		ct0
 #endif /* __CHERI_PURE_CAPABILITY__ */
 
 PSEUDO_END (__getcontext)

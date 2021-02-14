@@ -219,8 +219,9 @@ LEAF (__swapcontext)
 	cjr	ct1
 
 
-99:	cllc	ct1, __syscall_error
-	cjr		ct1
+99:	j	__syscall_error
+	//cllc	ct1, __syscall_error
+	//cjr		ct1
 
 #endif /* __CHERI_PURE_CAPABILITY__ */
 
