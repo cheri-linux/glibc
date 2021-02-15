@@ -91,15 +91,21 @@ elf_machine_dynamic (void)
 static inline ElfW(Addr)
 elf_machine_load_address (void)
 {
+  
+#ifndef __CHERI_PURE_CAPABILITY__
   ElfW(Addr) load_addr;
   asm ("lla %0, _DYNAMIC" : "=r" (load_addr));
+#else
+  uintptr_t load_addr;
+  asm ("cllc %0, _DYNAMIC" : "=C" (load_addr));
+#endif
   return load_addr - elf_machine_dynamic ();
 }
 
 /* Initial entry point code for the dynamic linker.
    The C function `_dl_start' is the real entry point;
    its return value is the user program's entry point.  */
-
+#ifndef __CHERI_PURE_CAPABILITY__
 #define RTLD_START asm (\
 	".text\n\
 	" _RTLD_PROLOGUE (ENTRY_POINT) "\
@@ -134,6 +140,47 @@ elf_machine_load_address (void)
 	" _RTLD_EPILOGUE (ENTRY_POINT) "\
 	.previous" \
 );
+
+#else /* __CHERI_PURE_CAPABILITY__ */
+#define RTLD_START asm (\
+	".text\n\
+	" _RTLD_PROLOGUE (ENTRY_POINT) "\
+	cmove ca0, csp\n\
+	cllc ct0, _dl_start\n\
+	cjalr ct0 \n\
+	# Stash user entry point in s0.\n\
+	cmove cs0, ca0\n\
+	# See if we were run as a command with the executable file\n\
+	# name as an extra leading argument.\n\
+	1: auipcc ca0, %pcrel_hi(_dl_skip_args)\n\
+  	clw  a0, %pcrel_lo(1b)(ca0)\n\
+	# Load the original argument count.\n\
+	" STRINGXP (REG_L) " a1, 0(csp)\n\
+	# Subtract _dl_skip_args from it.\n\
+	sub a1, a1, a0\n\
+	# Adjust the stack pointer to skip _dl_skip_args words.\n\
+	sll a0, a0, " STRINGXP (PTRLOG) "\n\
+	cincoffset csp, csp, a0 \n\
+	# Save back the modified argument count.\n\
+	" STRINGXP (REG_S) " a1, 0(csp)\n\
+	# Call _dl_init (struct link_map *main_map, int argc, char **argv, char **env) \n\
+	clgc ca0, _rtld_local\n\
+	cincoffset ca2, csp, " STRINGXP (SZCREG) "\n\
+	sll a3, a1, " STRINGXP (PTRLOG) "\n\
+	cincoffset ca3, ca2, a3\n\
+	# TODO cheri: skipping the NULL in argv? \n\
+	cincoffset ca3, ca3, " STRINGXP (SZCREG) "\n\
+	# Call the function to run the initializers.\n\
+  	cllc ct0, _dl_init\n\
+	cjalr ct0 \n\
+	# Pass our finalizer function to _start.\n\
+	cllc ca0, _dl_fini\n\
+	# Jump to the user entry point.\n\
+	cjr cs0\n\
+	" _RTLD_EPILOGUE (ENTRY_POINT) "\
+	.previous" \
+);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 /* Names of the architecture-specific auditing callback functions.  */
 #define ARCH_LA_PLTENTER riscv_gnu_pltenter
