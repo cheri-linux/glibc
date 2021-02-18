@@ -76,7 +76,11 @@ T_PSEUDO_END_ERRVAL (SYSCALL_SYMBOL)
    it returns -1 and sets errno.  */
 
 T_PSEUDO (SYSCALL_SYMBOL, SYSCALL_NAME, SYSCALL_NARGS)
+#ifndef __CHERI_PURE_CAPABILITY__
 	ret
+#else
+   cret 
+#endif
 T_PSEUDO_END (SYSCALL_SYMBOL)
 
 #endif

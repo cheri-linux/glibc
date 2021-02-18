@@ -45,12 +45,20 @@
   bgtu a0, a7, .Lsyscall_error ## name;
 
 # undef PSEUDO_END
+# ifndef __CHERI_PURE_CAPABILITY__	
 # define PSEUDO_END(sym) 					\
-  SYSCALL_ERROR_HANDLER (sym)					\
+  SYSCALL_ERROR_HANDLER (sym)				\
   ret;								\
   END (sym)
+#else 
+# define PSEUDO_END(sym) 					\
+  SYSCALL_ERROR_HANDLER (sym)					\
+  cret;								\
+  END (sym)
+#endif
 
 # if !IS_IN (libc)
+# ifndef __CHERI_PURE_CAPABILITY__
 #  if RTLD_PRIVATE_ERRNO
 #   define SYSCALL_ERROR_HANDLER(name)				\
 .Lsyscall_error ## name:					\
@@ -75,11 +83,41 @@
         sw a0, %tprel_lo(errno)(t1);				\
         li a0, -1;
 #  endif
-# else
+#else /* __CHERI_PURE_CAPABILITY__ */
+#  if RTLD_PRIVATE_ERRNO
+#   define SYSCALL_ERROR_HANDLER(name)				\
+.Lsyscall_error ## name:					\
+	li t1, -4096;						\
+	neg a0, a0;						\
+1:	auipcc ct1, %pcrel_hi(rtld_errno);		\
+	csw a0, %pcrel_lo(1b)(ct1);					\
+    li a0, -1;
+#  elif defined (__PIC__)
+#   define SYSCALL_ERROR_HANDLER(name)				\
+.Lsyscall_error ## name:					\
+        /*la.tls.ie t1, errno;				*/\
+2:	auipcc ct1, %tls_ie_pcrel_hi(errno); \
+	cld t1, %pcrel_lo(2b)(ct1);							\
+	cincoffset ct1, ctp, t1; 	 \
+	neg a0, a0;						\
+	csw a0, 0(ct1)					\
+        li a0, -1;
+#  else
+#   define SYSCALL_ERROR_HANDLER(name)				\
+/* TODO Cheri: Adapt this code snippet */ \
+.Lsyscall_error ## name:					\
+        lui t1, %tprel_hi(errno);				\
+        add t1, t1, tp, %tprel_add(errno);			\
+	neg a0, a0;						\
+        sw a0, %tprel_lo(errno)(t1);				\
+        li a0, -1;
+#  endif
+#endif/* __CHERI_PURE_CAPABILITY__ */
+# else /* !IS_IN (libc) */
 #  define SYSCALL_ERROR_HANDLER(name)				\
 .Lsyscall_error ## name:					\
         j       __syscall_error;
-# endif
+# endif /* !IS_IN (libc) */
 
 /* Performs a system call, not setting errno.  */
 # undef PSEUDO_NEORRNO
@@ -94,7 +132,11 @@
   END (name)
 
 # undef ret_NOERRNO
+#ifndef __CHERI_PURE_CAPABILITY__
 # define ret_NOERRNO ret
+#else
+# define ret_NOERRNO cret
+#endif
 
 /* Perfroms a system call, returning the error code.  */
 # undef PSEUDO_ERRVAL
@@ -107,7 +149,11 @@
   END (name)
 
 # undef ret_ERRVAL
+#ifndef __CHERI_PURE_CAPABILITY__
 # define ret_ERRVAL ret
+#else
+# define ret_ERRVAL cret
+#endif
 
 #endif /* __ASSEMBLER__ */
 
@@ -154,7 +200,168 @@
 
 # define INTERNAL_SYSCALL_NCS(number, err, nr, args...) \
 	internal_syscall##nr (number, err, args)
+#ifndef __CHERI_PURE_CAPABITLITY__
+# define internal_syscall0(number, err, dummy...)			\
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0");				\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "=r" (__a0)							\
+	: "r" (__a7)							\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
 
+# define internal_syscall1(number, err, arg0)				\
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7)							\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall2(number, err, arg0, arg1)	    		\
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r" (__a1)					\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall3(number, err, arg0, arg1, arg2)      		\
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r" (__a1), "r" (__a2)				\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall4(number, err, arg0, arg1, arg2, arg3)	  \
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	register long int __a3 asm ("a3") = (long int) (arg3);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r" (__a1), "r" (__a2), "r" (__a3)		\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall5(number, err, arg0, arg1, arg2, arg3, arg4)   \
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	register long int __a3 asm ("a3") = (long int) (arg3);		\
+	register long int __a4 asm ("a4") = (long int) (arg4);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r"(__a1), "r"(__a2), "r"(__a3), "r" (__a4)	\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall6(number, err, arg0, arg1, arg2, arg3, arg4, arg5) \
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	register long int __a3 asm ("a3") = (long int) (arg3);		\
+	register long int __a4 asm ("a4") = (long int) (arg4);		\
+	register long int __a5 asm ("a5") = (long int) (arg5);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r" (__a1), "r" (__a2), "r" (__a3),		\
+	  "r" (__a4), "r" (__a5)					\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+})
+
+# define internal_syscall7(number, err, arg0, arg1, arg2, arg3, arg4, arg5, arg6) \
+({ 									\
+	long int _sys_result;						\
+									\
+	{								\
+	register long int __a7 asm ("a7") = number;			\
+	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	register long int __a3 asm ("a3") = (long int) (arg3);		\
+	register long int __a4 asm ("a4") = (long int) (arg4);		\
+	register long int __a5 asm ("a5") = (long int) (arg5);		\
+	register long int __a6 asm ("a6") = (long int) (arg6);		\
+	__asm__ volatile ( 						\
+	"scall\n\t" 							\
+	: "+r" (__a0)							\
+	: "r" (__a7), "r" (__a1), "r" (__a2), "r" (__a3),		\
+	  "r" (__a4), "r" (__a5), "r" (__a6)				\
+	: __SYSCALL_CLOBBERS); 						\
+	_sys_result = __a0;						\
+	}								\
+	_sys_result;							\
+}) 			 
+
+#else /* __CHERI_PURE_CAPABILITY__ */
+/* TODO Cheri: Adapt this part */
 # define internal_syscall0(number, err, dummy...)			\
 ({ 									\
 	long int _sys_result;						\
@@ -313,6 +520,8 @@
 	}								\
 	_sys_result;							\
 })
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 # define __SYSCALL_CLOBBERS "memory"
 

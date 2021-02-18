@@ -56,7 +56,8 @@ ENTRY (__syscall_set_errno)
 #else // __CHERI_PURE_CAPABILITY__
 #if RTLD_PRIVATE_ERRNO
 	/* TODO Cheri: adapt this */
-	sw a0, rtld_errno, t1
+3:	auipcc ct1, %pcrel_hi(errno)
+	csw a0, %pcrel_lo(3b)(ct1)
 #elif defined(__PIC__)
 	//la.tls.ie t1, errno
 	// no idea if that's working
