@@ -96,6 +96,7 @@ elf_machine_load_address (void)
   ElfW(Addr) load_addr;
   asm ("lla %0, _DYNAMIC" : "=r" (load_addr));
 #else
+	/* cheri TODO: review quick fix uintptr_t w.r.t. usage of ELf64_Addr (potential cast to ptr/cap)*/ 
   uintptr_t load_addr;
   asm ("cllc %0, _DYNAMIC" : "=C" (load_addr));
 #endif
