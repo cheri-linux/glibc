@@ -18,6 +18,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -286,7 +287,12 @@ _dl_start_profile (void)
     char dimen[15];
     char dimen_abbrev;
   } hist_hdr;
+
+  #ifndef __CHERI_PURE_CAPABILITY__
   if (sizeof (hist_hdr) != sizeof (struct gmon_hist_hdr)
+  #else
+  if (sizeof(hist_hdr) != ROUNDUP(sizeof (struct gmon_hist_hdr), 16)
+  #endif
       || (offsetof (struct real_gmon_hist_hdr, low_pc)
 	  != offsetof (struct gmon_hist_hdr, low_pc))
       || (offsetof (struct real_gmon_hist_hdr, high_pc)
