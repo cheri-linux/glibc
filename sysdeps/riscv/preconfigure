@@ -4,6 +4,8 @@ riscv*)
     flen=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __riscv_flen \(.*\)/\1/p'`
     float_abi=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __riscv_float_abi_\([^ ]*\) .*/\1/p'`
     atomic=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | grep '#define __riscv_atomic' | cut -d' ' -f2`
+    cheri=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __CHERI__ \(.*\)/\1/p'`
+    clen=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __riscv_clen \(.*\)/\1/p'`
 
     case "$xlen" in
     32)
@@ -61,6 +63,26 @@ riscv*)
 	exit 1
 	;;
     esac
+
+    case "$clen" in
+    64)
+	echo "glibc does not yet support 32-bit systems" >&2
+	exit 1
+	;;
+    128)
+    $as_echo "#define RISCV_ABI_CLEN $clen" >>confdefs.h
+	;;
+    *)
+	echo "Unable to determine CLEN" >&2
+        case "$cheri" in 
+        1)
+        echo "CHERI hw feature but no clen ... exit"
+        exit 1
+        ;;
+        esac
+	;;
+    esac
+
 
     base_machine=riscv
     machine=riscv/rv$xlen/$float_machine

@@ -22,7 +22,11 @@
 #define LD_SO_SUFFIX ".so.1"
 
 #if __riscv_xlen == 64
+#ifndef __CHERI__
 # define LD_SO_ABI "riscv64-lp64"
+#else
+#define LD_SO_ABI "riscv64-l64pc128"
+#endif
 #else
 # error "rv32i-based targets are not supported"
 #endif
