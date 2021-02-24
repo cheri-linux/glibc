@@ -21,8 +21,8 @@
 /* TODO Cheri: Adapt this file */
 
 long int
-syscall (long int syscall_number, long int arg1, long int arg2, long int arg3,
-	 long int arg4, long int arg5, long int arg6, long int arg7)
+syscall (long int syscall_number, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+	 uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, uintptr_t arg7)
 {
   long int ret;
   INTERNAL_SYSCALL_DECL (err);

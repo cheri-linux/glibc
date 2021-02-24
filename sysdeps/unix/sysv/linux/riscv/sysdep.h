@@ -23,6 +23,11 @@
 #include <tls.h>
 
 /* TODO Cheri: Adapt this file */
+#ifndef __CHERI_PURE_CAPABILITY__
+# define _CREG 
+#else
+# define _CREG "c"
+#endif
 
 #ifdef __ASSEMBLER__
 
@@ -200,6 +205,7 @@
 
 # define INTERNAL_SYSCALL_NCS(number, err, nr, args...) \
 	internal_syscall##nr (number, err, args)
+
 #ifndef __CHERI_PURE_CAPABILITY__
 # define internal_syscall0(number, err, dummy...)			\
 ({ 									\
@@ -368,7 +374,7 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0");				\
+	register uintptr_t __a0 asm (_CREG"a0");				\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "=r" (__a0)							\
@@ -385,7 +391,7 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -402,8 +408,8 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -420,9 +426,9 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
-	register long int __a2 asm ("a2") = (long int) (arg2);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
+	register uintptr_t __a2 asm (_CREG"a2") = (uintptr_t) (arg2);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -439,10 +445,10 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
-	register long int __a2 asm ("a2") = (long int) (arg2);		\
-	register long int __a3 asm ("a3") = (long int) (arg3);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
+	register uintptr_t __a2 asm (_CREG"a2") = (uintptr_t) (arg2);		\
+	register uintptr_t __a3 asm (_CREG"a3") = (uintptr_t) (arg3);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -459,11 +465,11 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
-	register long int __a2 asm ("a2") = (long int) (arg2);		\
-	register long int __a3 asm ("a3") = (long int) (arg3);		\
-	register long int __a4 asm ("a4") = (long int) (arg4);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
+	register uintptr_t __a2 asm (_CREG"a2") = (uintptr_t) (arg2);		\
+	register uintptr_t __a3 asm (_CREG"a3") = (uintptr_t) (arg3);		\
+	register uintptr_t __a4 asm (_CREG"a4") = (uintptr_t) (arg4);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -480,12 +486,12 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
-	register long int __a2 asm ("a2") = (long int) (arg2);		\
-	register long int __a3 asm ("a3") = (long int) (arg3);		\
-	register long int __a4 asm ("a4") = (long int) (arg4);		\
-	register long int __a5 asm ("a5") = (long int) (arg5);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
+	register uintptr_t __a2 asm (_CREG"a2") = (uintptr_t) (arg2);		\
+	register uintptr_t __a3 asm (_CREG"a3") = (uintptr_t) (arg3);		\
+	register uintptr_t __a4 asm (_CREG"a4") = (uintptr_t) (arg4);		\
+	register uintptr_t __a5 asm (_CREG"a5") = (uintptr_t) (arg5);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
@@ -503,13 +509,13 @@
 									\
 	{								\
 	register long int __a7 asm ("a7") = number;			\
-	register long int __a0 asm ("a0") = (long int) (arg0);		\
-	register long int __a1 asm ("a1") = (long int) (arg1);		\
-	register long int __a2 asm ("a2") = (long int) (arg2);		\
-	register long int __a3 asm ("a3") = (long int) (arg3);		\
-	register long int __a4 asm ("a4") = (long int) (arg4);		\
-	register long int __a5 asm ("a5") = (long int) (arg5);		\
-	register long int __a6 asm ("a6") = (long int) (arg6);		\
+	register uintptr_t __a0 asm (_CREG"a0") = (uintptr_t) (arg0);		\
+	register uintptr_t __a1 asm (_CREG"a1") = (uintptr_t) (arg1);		\
+	register uintptr_t __a2 asm (_CREG"a2") = (uintptr_t) (arg2);		\
+	register uintptr_t __a3 asm (_CREG"a3") = (uintptr_t) (arg3);		\
+	register uintptr_t __a4 asm (_CREG"a4") = (uintptr_t) (arg4);		\
+	register uintptr_t __a5 asm (_CREG"a5") = (uintptr_t) (arg5);		\
+	register uintptr_t __a6 asm (_CREG"a6") = (uintptr_t) (arg6);		\
 	__asm__ volatile ( 						\
 	"scall\n\t" 							\
 	: "+r" (__a0)							\
