@@ -100,7 +100,7 @@
 	cld t1, %pcrel_lo(2b)(ct1);							\
 	cincoffset ct1, ctp, t1; 	 \
 	neg a0, a0;						\
-	csw a0, 0(ct1)					\
+	csw a0, 0(ct1);				\
         li a0, -1;
 #  else
 #   define SYSCALL_ERROR_HANDLER(name)				\
@@ -109,7 +109,7 @@
         lui t1, %tprel_hi(errno);				\
         add t1, t1, tp, %tprel_add(errno);			\
 	neg a0, a0;						\
-        sw a0, %tprel_lo(errno)(t1);				\
+        csw a0, %tprel_lo(errno)(ct1);				\
         li a0, -1;
 #  endif
 #endif/* __CHERI_PURE_CAPABILITY__ */
@@ -200,7 +200,7 @@
 
 # define INTERNAL_SYSCALL_NCS(number, err, nr, args...) \
 	internal_syscall##nr (number, err, args)
-#ifndef __CHERI_PURE_CAPABITLITY__
+#ifndef __CHERI_PURE_CAPABILITY__
 # define internal_syscall0(number, err, dummy...)			\
 ({ 									\
 	long int _sys_result;						\
