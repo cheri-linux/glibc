@@ -23,16 +23,24 @@
 #define EW_(e, w, t) EW__(e, w, _##t)
 #define EW__(e, w, t) e##w##t
 
+/* TODO Cheri: Is this a real fix for the issue? */
+#ifndef __CHERI_PURE_CAPABILITY__
+typedef uint64_t Elf64_Pointer;
+typedef uint32_t Elf32_Pointer;
+#else /* __CHERI_PURE_CAPABILITY__ */
+typedef uintptr_t Elf64_Pointer;
+#endif /* __CHERI_PURE_CAPABILITY__ */
+
 struct E(link_map)
 {
   EW(Addr) l_addr;
-  EW(Addr) l_name;
-  EW(Addr) l_ld;
-  EW(Addr) l_next;
-  EW(Addr) l_prev;
-  EW(Addr) l_real;
+  EW(Pointer) l_name;
+  EW(Pointer) l_ld;
+  EW(Pointer) l_next;
+  EW(Pointer) l_prev;
+  EW(Pointer) l_real;
   Lmid_t l_ns;
-  EW(Addr) l_libname;
+  EW(Pointer) l_libname;
 };
 #if CLASS == __ELF_NATIVE_CLASS
 _Static_assert (offsetof (struct link_map, l_addr)
@@ -46,8 +54,8 @@ _Static_assert (offsetof (struct link_map, l_next)
 
 struct E(libname_list)
 {
-  EW(Addr) name;
-  EW(Addr) next;
+  EW(Pointer) name;
+  EW(Pointer) next;
 };
 #if CLASS == __ELF_NATIVE_CLASS
 _Static_assert (offsetof (struct libname_list, name)
@@ -61,8 +69,12 @@ struct E(r_debug)
   int r_version;
 #if CLASS == 64
   int pad;
+#ifdef __CHERI_PURE_CAPABILITY__
+  int pad2;
+  int pad3;
 #endif
-  EW(Addr) r_map;
+#endif
+  EW(Pointer) r_map;
 };
 #if CLASS == __ELF_NATIVE_CLASS
 _Static_assert (offsetof (struct r_debug, r_version)

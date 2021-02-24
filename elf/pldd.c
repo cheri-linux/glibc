@@ -269,8 +269,11 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
 }
 
 
+/* Cheri pldd won't be able to read 32 bit ELFs, shouldn't be necessary */
+#ifndef __CHERI_PURE_CAPABILITY__
 #define CLASS 32
 #include "pldd-xx.c"
+#endif
 #define CLASS 64
 #include "pldd-xx.c"
 
@@ -328,9 +331,14 @@ get_process_info (const char *exe, int dfd, long int pid)
   close (fd);
 
   int retval;
-  if (e_ident[EI_CLASS] == ELFCLASS32)
+  if (e_ident[EI_CLASS] == ELFCLASS32) {
+  #ifdef __CHERI_PURE_CAPABILITY__
+      error (0, 0, gettext ("Cheri pure cap pldd does not support 32 bit ELFs"));
+      return EXIT_FAILURE;
+  #else /* __CHERI_PURE_CAPABILITY__ */
     retval = find_maps32 (exe, memfd, pid, auxv, auxv_size);
-  else
+  #endif /* __CHERI_PURE_CAPABILITY__ */
+  } else
     retval = find_maps64 (exe, memfd, pid, auxv, auxv_size);
 
   free (auxv);
