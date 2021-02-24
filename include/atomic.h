@@ -542,9 +542,16 @@
    operations.  */
 void __atomic_link_error (void);
 # if __HAVE_64B_ATOMICS == 1
+# ifndef __CHERI_PURE_CAPABILITY__
 #  define __atomic_check_size(mem) \
    if ((sizeof (*mem) != 4) && (sizeof (*mem) != 8))			      \
      __atomic_link_error ();
+# else /* __CHERI_PURE_CAPABILIITY__ */
+/* Cheri adds 16 byte atomics loading/storing capabilities */
+#  define __atomic_check_size(mem) \
+   if ((sizeof (*mem) != 4) && (sizeof (*mem) != 8) && (sizeof (*mem) != 16))			      \
+     __atomic_link_error ();
+# endif /* __CHERI_PURE_CAPABILIITY__ */
 # else
 #  define __atomic_check_size(mem) \
    if (sizeof (*mem) != 4)						      \
@@ -555,10 +562,18 @@ void __atomic_link_error (void);
    loads and stores makes this easier for archs that do not have native
    support for atomic operations to less-than-word-sized data.  */
 # if __HAVE_64B_ATOMICS == 1
+# ifndef __CHERI_PURE_CAPABILITY__
 #  define __atomic_check_size_ls(mem) \
    if ((sizeof (*mem) != 1) && (sizeof (*mem) != 2) && (sizeof (*mem) != 4)   \
        && (sizeof (*mem) != 8))						      \
      __atomic_link_error ();
+# else /* __CHERI_PURE_CAPABILIITY__ */
+/* Cheri adds 16 byte atomics loading/storing capabilities */
+#  define __atomic_check_size_ls(mem) \
+   if ((sizeof (*mem) != 1) && (sizeof (*mem) != 2) && (sizeof (*mem) != 4)   \
+       && (sizeof (*mem) != 8) && (sizeof (*mem) != 16))						      \
+     __atomic_link_error ();
+# endif /* __CHERI_PURE_CAPABILIITY__ */
 # else
 #  define __atomic_check_size_ls(mem) \
    if ((sizeof (*mem) != 1) && (sizeof (*mem) != 2) && sizeof (*mem) != 4)    \
