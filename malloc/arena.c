@@ -125,7 +125,7 @@ int __malloc_initialized = -1;
 /* find the heap and corresponding arena for a given ptr */
 
 #define heap_for_ptr(ptr) \
-  ((heap_info *) ((unsigned long) (ptr) & ~(HEAP_MAX_SIZE - 1)))
+  ((heap_info *) ((uintptr_t) (ptr) & ~(HEAP_MAX_SIZE - 1)))
 #define arena_for_chunk(ptr) \
   (chunk_main_arena (ptr) ? &main_arena : heap_for_ptr (ptr)->ar_ptr)
 
@@ -476,7 +476,7 @@ new_heap (size_t size, size_t top_pad)
       p2 = (char *) MMAP (aligned_heap_area, HEAP_MAX_SIZE, PROT_NONE,
                           MAP_NORESERVE);
       aligned_heap_area = NULL;
-      if (p2 != MAP_FAILED && ((unsigned long) p2 & (HEAP_MAX_SIZE - 1)))
+      if (p2 != MAP_FAILED && ((uintptr_t) p2 & (HEAP_MAX_SIZE - 1)))
         {
           __munmap (p2, HEAP_MAX_SIZE);
           p2 = MAP_FAILED;
@@ -487,7 +487,7 @@ new_heap (size_t size, size_t top_pad)
       p1 = (char *) MMAP (0, HEAP_MAX_SIZE << 1, PROT_NONE, MAP_NORESERVE);
       if (p1 != MAP_FAILED)
         {
-          p2 = (char *) (((unsigned long) p1 + (HEAP_MAX_SIZE - 1))
+          p2 = (char *) (((uintptr_t) p1 + (HEAP_MAX_SIZE - 1))
                          & ~(HEAP_MAX_SIZE - 1));
           ul = p2 - p1;
           if (ul)
@@ -504,7 +504,7 @@ new_heap (size_t size, size_t top_pad)
           if (p2 == MAP_FAILED)
             return 0;
 
-          if ((unsigned long) p2 & (HEAP_MAX_SIZE - 1))
+          if ((uintptr_t) p2 & (HEAP_MAX_SIZE - 1))
             {
               __munmap (p2, HEAP_MAX_SIZE);
               return 0;
@@ -627,7 +627,7 @@ heap_trim (heap_info *heap, size_t pad)
           p = prev_chunk (p);
           unlink (ar_ptr, p, bck, fwd);
         }
-      assert (((unsigned long) ((char *) p + new_size) & (pagesz - 1)) == 0);
+      assert (((uintptr_t) ((char *) p + new_size) & (pagesz - 1)) == 0);
       assert (((char *) p + new_size) == ((char *) heap + heap->size));
       top (ar_ptr) = top_chunk = p;
       set_head (top_chunk, new_size | PREV_INUSE);

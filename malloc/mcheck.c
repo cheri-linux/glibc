@@ -88,7 +88,7 @@ checkhdr (const struct hdr *hdr)
        an error and report it.  */
     return MCHECK_OK;
 
-  switch (hdr->magic ^ ((uintptr_t) hdr->prev + (uintptr_t) hdr->next))
+  switch (hdr->magic ^ ((uintptr_t) hdr->prev + (size_t) hdr->next))
     {
     default:
       status = MCHECK_HEAD;
@@ -145,13 +145,13 @@ unlink_blk (struct hdr *ptr)
     {
       ptr->next->prev = ptr->prev;
       ptr->next->magic = MAGICWORD ^ ((uintptr_t) ptr->next->prev
-                                      + (uintptr_t) ptr->next->next);
+                                      + (size_t) ptr->next->next);
     }
   if (ptr->prev != NULL)
     {
       ptr->prev->next = ptr->next;
       ptr->prev->magic = MAGICWORD ^ ((uintptr_t) ptr->prev->prev
-                                      + (uintptr_t) ptr->prev->next);
+                                      + (size_t) ptr->prev->next);
     }
   else
     root = ptr->next;
@@ -170,7 +170,7 @@ link_blk (struct hdr *hdr)
     {
       hdr->next->prev = hdr;
       hdr->next->magic = MAGICWORD ^ ((uintptr_t) hdr
-                                      + (uintptr_t) hdr->next->next);
+                                      + (size_t) hdr->next->next);
     }
 }
 static void

@@ -93,7 +93,7 @@ magicbyte (const void *p)
 {
   unsigned char magic;
 
-  magic = (((uintptr_t) p >> 3) ^ ((uintptr_t) p >> 11)) & 0xFF;
+  magic = (((uintptr_t) p >> 3) ^ ((size_t) p >> 11)) & 0xFF;
   /* Do not return 1.  See the comment in mem2mem_check().  */
   if (magic == 1)
     ++magic;

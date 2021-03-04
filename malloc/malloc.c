@@ -4687,7 +4687,7 @@ _int_memalign (mstate av, size_t alignment, size_t bytes)
 
   p = mem2chunk (m);
 
-  if ((((unsigned long) (m)) % alignment) != 0)   /* misaligned */
+  if ((((uintptr_t) (m)) % alignment) != 0)   /* misaligned */
 
     { /*
                 Find an aligned spot inside chunk.  Since we need to give back
@@ -4696,8 +4696,8 @@ _int_memalign (mstate av, size_t alignment, size_t bytes)
                 we can move to the next aligned spot -- we've allocated enough
                 total room so that this is always possible.
                  */
-      brk = (char *) mem2chunk (((unsigned long) (m + alignment - 1)) &
-                                - ((signed long) alignment));
+      brk = (char *) mem2chunk (((uintptr_t) (m + alignment - 1)) &
+                                - ((intptr_t) alignment));
       if ((unsigned long) (brk - (char *) (p)) < MINSIZE)
         brk += alignment;
 
