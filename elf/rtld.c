@@ -42,6 +42,10 @@
 #include <stap-probe.h>
 #include <stackinfo.h>
 
+#ifdef __CHERI_PURE_CAPABILITY__
+#include <cheri_init_globals.h>
+#endif
+
 #include <assert.h>
 
 /* Avoid PLT use for our local calls at startup.  */
@@ -325,7 +329,11 @@ DL_SYSINFO_IMPLEMENTATION
    up a temporary link map for ld.so if we can mark _rtld_global as
    hidden.  */
 #ifdef PI_STATIC_AND_HIDDEN
+/* cheri requires capability initialization for globals early on and 
+   does not work with the global map early on, hence use bootstrap map */
+#ifndef __CHERI_PURE_CAPABILITY__
 # define DONT_USE_BOOTSTRAP_MAP	1
+#endif
 #endif
 
 #ifdef DONT_USE_BOOTSTRAP_MAP
@@ -504,8 +512,15 @@ _dl_start (void *arg)
 # endif
 #endif
 
+  ElfW(Addr) l_addr = elf_machine_load_address ();
+
+  /* This would be the right place to init globals for cheri if we 
+     want to get rid of the bootstrap map, i.e. set DONT_USE_BOOTSTRAP_MAP */
+  //cheri_init_globals();
+
   /* Figure out the run-time load address of the dynamic linker itself.  */
-  bootstrap_map.l_addr = elf_machine_load_address ();
+  //bootstrap_map.l_addr = elf_machine_load_address ();
+  bootstrap_map.l_addr = l_addr;
 
   /* Read our own dynamic section and fill in the info array.  */
   bootstrap_map.l_ld = (void *) bootstrap_map.l_addr + elf_machine_dynamic ();

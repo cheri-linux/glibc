@@ -79,8 +79,16 @@ elf_machine_matches_host (const ElfW(Ehdr) *ehdr)
 static inline ElfW(Addr) __attribute__((always_inline))
 elf_machine_dynamic (void)
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   extern ElfW(Addr) _GLOBAL_OFFSET_TABLE_ __attribute__ ((visibility ("hidden")));
   return _GLOBAL_OFFSET_TABLE_;
+#else /* __CHERI_PURE_CAPABILITY__ */
+  /* Globals are not initialized yet when this function is used
+     therefore, access symbol using PC-relative addressing */
+  ElfW(Addr) *got;
+  asm ("cllc %0, _GLOBAL_OFFSET_TABLE_" : "=C" (got));
+  return *got;
+#endif /* __CHERI_PURE_CAPABILITY__ */
 }
 
 #define STRINGXP(X) __STRING (X)

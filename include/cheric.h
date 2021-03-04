@@ -174,7 +174,7 @@ cheri_codeptrperm(const void *ptr, size_t len, register_t perm)
 	    perm | CHERI_PERM_GLOBAL));
 }
 
-static __inline void * __capability
+static __always_inline void * __capability
 cheri_long(const long addr, size_t len)
 {
 	if (!addr)
