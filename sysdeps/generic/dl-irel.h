@@ -19,11 +19,17 @@
 #ifndef _DL_IREL_H
 #define _DL_IREL_H
 
+#include <cheric.h>
+
 static inline DL_FIXUP_VALUE_TYPE
 __attribute ((always_inline))
 elf_ifunc_invoke (ElfW(Addr) addr)
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   return ((DL_FIXUP_VALUE_TYPE (*) (void)) (addr)) ();
+#else
+  return ((DL_FIXUP_VALUE_TYPE (*) (void)) (cheri_long(addr, -1))) ();
+#endif
 }
 
 #endif /* dl-irel.h */

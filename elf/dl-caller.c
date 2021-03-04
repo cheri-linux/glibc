@@ -37,8 +37,13 @@ _dl_check_caller (const void *caller, enum allowmask mask)
   for (Lmid_t ns = 0; ns < GL(dl_nns); ++ns)
     for (struct link_map *l = GL(dl_ns)[ns]._ns_loaded; l != NULL;
 	 l = l->l_next)
+#ifndef __CHERI_PURE_CAPABILITY__
       if (caller >= (const void *) l->l_map_start
 	  && caller < (const void *) l->l_text_end)
+#else
+      if (caller >= (const void *) cheri_long(l->l_map_start, -1)
+	  && caller < (const void *) cheri_long(l->l_text_end, -1))
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	{
 	  /* The address falls into this DSO's address range.  Check the
 	     name.  */
@@ -76,9 +81,15 @@ _dl_check_caller (const void *caller, enum allowmask mask)
 	}
 
   /* Maybe the dynamic linker is not yet on the list.  */
+#ifndef __CHERI_PURE_CAPABILITY__
   if ((mask & allow_ldso) != 0
       && caller >= (const void *) GL(dl_rtld_map).l_map_start
       && caller < (const void *) GL(dl_rtld_map).l_text_end)
+#else
+  if ((mask & allow_ldso) != 0
+      && caller >= (const void *) cheri_long(GL(dl_rtld_map).l_map_start, -1)
+      && caller < (const void *) cheri_long(GL(dl_rtld_map).l_text_end, -1))
+#endif /* __CHERI_PURE_CAPABILITY__ */
     return 0;
 
   /* No valid caller.  */

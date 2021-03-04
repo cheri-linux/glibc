@@ -18,6 +18,7 @@
 
 #include <stddef.h>
 #include <ldsodefs.h>
+#include <cheric.h>
 
 
 /* Type of the initializer.  */
@@ -54,9 +55,13 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
      - the one named by DT_INIT
      - the others in the DT_INIT_ARRAY.
   */
-  if (l->l_info[DT_INIT] != NULL)
+  if (l->l_info[DT_INIT] != NULL) {
+#ifndef __CHERI_PURE_CAPABILITY__
     DL_CALL_DT_INIT(l, l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr, argc, argv, env);
-
+#else
+    DL_CALL_DT_INIT(l, cheri_long(l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr, -1), argc, argv, env);
+#endif
+  }
   /* Next see whether there is an array with initialization functions.  */
   ElfW(Dyn) *init_array = l->l_info[DT_INIT_ARRAY];
   if (init_array != NULL)
@@ -66,10 +71,21 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
       ElfW(Addr) *addrs;
 
       jm = l->l_info[DT_INIT_ARRAYSZ]->d_un.d_val / sizeof (ElfW(Addr));
-
+#ifndef __CHERI_PURE_CAPABILITY__
       addrs = (ElfW(Addr) *) (init_array->d_un.d_ptr + l->l_addr);
-      for (j = 0; j < jm; ++j)
-	((init_t) addrs[j]) (argc, argv, env);
+      for (j = 0; j < jm; ++j) {
+        ((init_t) addrs[j]) (argc, argv, env);
+      }
+#else
+      addrs = (ElfW(Addr) *) (cheri_long(init_array->d_un.d_ptr + l->l_addr, -1));
+      for (j = 0; j < jm; ++j) {
+#ifndef __CHERI_PURE_CAPABILITY__
+        ((init_t) addrs[j]) (argc, argv, env);
+#else
+        ((init_t) cheri_long(addrs[j], -1)) (argc, argv, env);
+#endif /* __CHERI_PURE_CAPABILITY__ */
+      }
+#endif
     }
 }
 
@@ -99,9 +115,18 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
 	_dl_debug_printf ("\ncalling preinit: %s\n\n",
 			  DSO_FILENAME (main_map->l_name));
 
+#ifndef __CHERI_PURE_CAPABILITY__
       addrs = (ElfW(Addr) *) (preinit_array->d_un.d_ptr + main_map->l_addr);
-      for (cnt = 0; cnt < i; ++cnt)
-	((init_t) addrs[cnt]) (argc, argv, env);
+#else 
+      addrs = (ElfW(Addr) *) (cheri_long(preinit_array->d_un.d_ptr + main_map->l_addr, -1));
+#endif
+      for (cnt = 0; cnt < i; ++cnt) {
+#ifndef __CHERI_PURE_CAPABILITY__
+        ((init_t) addrs[cnt]) (argc, argv, env);
+#else
+        ((init_t) cheri_long(addrs[cnt], -1)) (argc, argv, env);
+#endif /* __CHERI_PURE_CAPABILITY__ */
+      }
     }
 
   /* Stupid users forced the ELF specification to be changed.  It now

@@ -37,6 +37,8 @@
 #include <sys/stat.h>
 #include <atomic.h>
 
+#include <cheric.h>
+
 /* The LD_PROFILE feature has to be implemented different to the
    normal profiling using the gmon/ functions.  The problem is that an
    arbitrary amount of processes simulataneously can be run using
@@ -143,7 +145,11 @@ struct here_cg_arc_record
        __monstartup also ensures it is at least a multiple of the size
        of u_long), so all copies of this field do in fact have the
        appropriate alignment.  */
+#ifndef __CHERI_PURE_CAPABILITY__
     uint32_t count __attribute__ ((aligned (__alignof__ (uint32_t))));
+#else
+    uint32_t count __attribute__ ((aligned (__alignof__ (uintptr_t))));
+#endif /* __CHERI_PURE_CAPABILITY__ */
   } __attribute__ ((packed));
 
 static struct here_cg_arc_record *data;
@@ -225,7 +231,7 @@ _dl_start_profile (void)
 		     HISTFRACTION * sizeof (HISTCOUNTER));
   highpc = ROUNDUP (mapend + GL(dl_profile_map)->l_addr,
 		    HISTFRACTION * sizeof (HISTCOUNTER));
-  textsize = highpc - lowpc;
+  textsize = (unsigned long) highpc - (unsigned long) lowpc;
   kcountsize = textsize / HISTFRACTION;
   if ((HASHFRACTION & (HASHFRACTION - 1)) == 0)
     {
@@ -288,11 +294,11 @@ _dl_start_profile (void)
     char dimen_abbrev;
   } hist_hdr;
 
-  #ifndef __CHERI_PURE_CAPABILITY__
+#ifndef __CHERI_PURE_CAPABILITY__
   if (sizeof (hist_hdr) != sizeof (struct gmon_hist_hdr)
-  #else
+#else
   if (sizeof(hist_hdr) != ROUNDUP(sizeof (struct gmon_hist_hdr), 16)
-  #endif
+#endif
       || (offsetof (struct real_gmon_hist_hdr, low_pc)
 	  != offsetof (struct gmon_hist_hdr, low_pc))
       || (offsetof (struct real_gmon_hist_hdr, high_pc)
@@ -307,8 +313,13 @@ _dl_start_profile (void)
 	  != offsetof (struct gmon_hist_hdr, dimen_abbrev)))
     abort ();
 
+#ifndef __CHERI_PURE_CAPABILITY__
   hist_hdr.low_pc = (char *) mapstart;
   hist_hdr.high_pc = (char *) mapend;
+#else
+  hist_hdr.low_pc = (char *) cheri_long(mapstart, -1);
+  hist_hdr.high_pc = (char *) cheri_long(mapend, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
   hist_hdr.hist_size = kcountsize / sizeof (HISTCOUNTER);
   hist_hdr.prof_rate = __profile_frequency ();
   if (sizeof (hist_hdr.dimen) >= sizeof ("seconds"))
@@ -463,12 +474,12 @@ _dl_start_profile (void)
     }
 
   /* Setup counting data.  */
-  if (kcountsize < highpc - lowpc)
+  if (kcountsize < (unsigned long) highpc - (unsigned long) lowpc)
     {
 #if 0
       s_scale = ((double) kcountsize / (highpc - lowpc)) * SCALE_1_TO_1;
 #else
-      size_t range = highpc - lowpc;
+      size_t range = (unsigned long) highpc - (unsigned long) lowpc;
       size_t quot = range / kcountsize;
 
       if (quot >= SCALE_1_TO_1)

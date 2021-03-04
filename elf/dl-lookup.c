@@ -31,6 +31,8 @@
 
 #include <assert.h>
 
+#include <cheric.h>
+
 /* Return nonzero if check_match should consider SYM to fail to match a
    symbol reference for some machine-specific reason.  */
 #ifndef ELF_MACHINE_SYM_NO_MATCH
@@ -375,8 +377,13 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
       const ElfW(Sym) *versioned_sym = NULL;
 
       /* The tables for this map.  */
+#ifndef __CHERI_PURE_CAPABILITY__
       const ElfW(Sym) *symtab = (const void *) D_PTR (map, l_info[DT_SYMTAB]);
       const char *strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
+#else
+      const ElfW(Sym) *symtab = (const void *) cheri_long(D_PTR (map, l_info[DT_SYMTAB]), -1);
+      const char *strtab = (const void *) cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
       const ElfW(Sym) *sym;
       const ElfW(Addr) *bitmask = map->l_gnu_bitmask;
@@ -462,8 +469,13 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
 		  && map->l_info[DT_RELASZ] != NULL
 		  && map->l_info[DT_RELASZ]->d_un.d_val != 0)
 		{
+#ifndef __CHERI_PURE_CAPABILITY__
 		  const ElfW(Rela) *rela
 		    = (const ElfW(Rela) *) D_PTR (map, l_info[DT_RELA]);
+#else
+		  const ElfW(Rela) *rela
+		    = (const ElfW(Rela) *) cheri_long(D_PTR (map, l_info[DT_RELA]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 		  unsigned int rela_count
 		    = map->l_info[DT_RELASZ]->d_un.d_val / sizeof (*rela);
 
@@ -941,9 +953,15 @@ _dl_setup_hash (struct link_map *map)
 				    + DT_EXTRANUM + DT_VALNUM] != NULL))
     {
       Elf32_Word *hash32
+#ifndef __CHERI_PURE_CAPABILITY__
 	= (void *) D_PTR (map, l_info[DT_ADDRTAGIDX (DT_GNU_HASH) + DT_NUM
 				      + DT_THISPROCNUM + DT_VERSIONTAGNUM
 				      + DT_EXTRANUM + DT_VALNUM]);
+#else
+	= (void *) cheri_long(D_PTR (map, l_info[DT_ADDRTAGIDX (DT_GNU_HASH) + DT_NUM
+				      + DT_THISPROCNUM + DT_VERSIONTAGNUM
+				      + DT_EXTRANUM + DT_VALNUM]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
       map->l_nbuckets = *hash32++;
       Elf32_Word symbias = *hash32++;
       Elf32_Word bitmask_nwords = *hash32++;
@@ -963,7 +981,11 @@ _dl_setup_hash (struct link_map *map)
 
   if (!map->l_info[DT_HASH])
     return;
+#ifndef __CHERI_PURE_CAPABILITY__
   hash = (void *) D_PTR (map, l_info[DT_HASH]);
+#else
+  hash = (void *) cheri_long(D_PTR (map, l_info[DT_HASH]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
   map->l_nbuckets = *hash++;
   /* Skip nchain.  */

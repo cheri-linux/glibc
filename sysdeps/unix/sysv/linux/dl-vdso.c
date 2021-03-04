@@ -19,7 +19,6 @@
 #include "config.h"
 #include <ldsodefs.h>
 
-
 void *
 _dl_vdso_vsym (const char *name, const struct r_found_version *vers)
 {

@@ -30,6 +30,8 @@
 
 #include <dl-dst.h>
 
+#include <cheric.h>
+
 /* Whether an shared object references one or more auxiliary objects
    is signaled by the AUXTAG entry in l_info.  */
 #define AUXTAG	(DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGNUM \
@@ -224,7 +226,11 @@ _dl_map_object_deps (struct link_map *map,
 
       if (l->l_info[DT_NEEDED] || l->l_info[AUXTAG] || l->l_info[FILTERTAG])
 	{
+#ifndef __CHERI_PURE_CAPABILITY__
 	  const char *strtab = (const void *) D_PTR (l, l_info[DT_STRTAB]);
+#else
+	  const char *strtab = (const void *) cheri_long(D_PTR (l, l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  struct openaux_args args;
 	  struct list *orig;
 	  const ElfW(Dyn) *d;

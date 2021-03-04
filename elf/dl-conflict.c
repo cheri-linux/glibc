@@ -93,6 +93,7 @@ _dl_resolve_conflicts (struct link_map *l, ElfW(Rela) *conflict,
 
     GL(dl_num_cache_relocations) += conflictend - conflict;
 
+#ifndef __CHERI_PURE_CAPABILITY__
     for (; conflict < conflictend; ++conflict)
       elf_machine_rela (l, conflict, NULL, NULL, (void *) conflict->r_offset,
 			0
@@ -100,6 +101,15 @@ _dl_resolve_conflicts (struct link_map *l, ElfW(Rela) *conflict,
 			, NULL
 #endif
 			);
+#else
+    for (; conflict < conflictend; ++conflict)
+      elf_machine_rela (l, conflict, NULL, NULL, (void *) cheri_long(conflict->r_offset, -1),
+			0
+#ifndef NESTING
+			, NULL
+#endif
+			);
+#endif /* __CHERI_PURE_CAPABILITY__ */
   }
 #endif
 }

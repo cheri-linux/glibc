@@ -29,6 +29,7 @@
 #include <dl-tls.h>
 #include <dl-irel.h>
 
+#include <cheric.h>
 
 #ifdef SHARED
 /* Systems which do not have tls_index also probably have to define
@@ -171,7 +172,11 @@ RTLD_NEXT used in code not dynamically loaded"));
 	  DL_FIXUP_VALUE_TYPE fixup
 	    = DL_FIXUP_MAKE_VALUE (result, (ElfW(Addr)) value);
 	  fixup = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (fixup));
+#ifndef __CHERI_PURE_CAPABILITY__
 	  value = (void *) DL_FIXUP_VALUE_CODE_ADDR (fixup);
+#else
+	  value = (void *) cheri_long(DL_FIXUP_VALUE_CODE_ADDR (fixup), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	}
 
 #ifdef SHARED
@@ -180,12 +185,22 @@ RTLD_NEXT used in code not dynamically loaded"));
 	 tell us whether further auditing is wanted.  */
       if (__glibc_unlikely (GLRO(dl_naudit) > 0))
 	{
+#ifndef __CHERI_PURE_CAPABILITY__
 	  const char *strtab = (const char *) D_PTR (result,
 						     l_info[DT_STRTAB]);
+#else
+	  const char *strtab = (const char *) cheri_long(D_PTR (result,
+						     l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  /* Compute index of the symbol entry in the symbol table of
 	     the DSO with the definition.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	  unsigned int ndx = (ref - (ElfW(Sym) *) D_PTR (result,
 							 l_info[DT_SYMTAB]));
+#else
+	  unsigned int ndx = (ref - (ElfW(Sym) *) cheri_long(D_PTR (result,
+							 l_info[DT_SYMTAB]), -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	  if ((match->l_audit_any_plt | result->l_audit_any_plt) != 0)
 	    {
@@ -220,7 +235,11 @@ RTLD_NEXT used in code not dynamically loaded"));
 		  afct = afct->next;
 		}
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	      value = (void *) sym.st_value;
+#else
+	      value = (void *) cheri_long(sym.st_value, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	    }
 	}
 #endif

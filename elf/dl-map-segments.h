@@ -18,6 +18,8 @@
 
 #include <dl-load.h>
 
+#include <cheric.h>
+
 /* This implementation assumes (as does the corresponding implementation
    of _dl_unmap_segments, in dl-unmap-segments.h) that shared objects
    are always laid out with all segments contiguous (or with gaps
@@ -53,12 +55,21 @@ _dl_map_segments (struct link_map *l, int fd,
            - MAP_BASE_ADDR (l));
 
       /* Remember which part of the address space this object uses.  */
+#ifndef __CHERI_PURE_CAPABILITY__
       l->l_map_start = (ElfW(Addr)) __mmap ((void *) mappref, maplength,
                                             c->prot,
                                             MAP_COPY|MAP_FILE,
                                             fd, c->mapoff);
       if (__glibc_unlikely ((void *) l->l_map_start == MAP_FAILED))
         return DL_MAP_SEGMENTS_ERROR_MAP_SEGMENT;
+#else
+      l->l_map_start = (ElfW(Addr)) __mmap ((void *) cheri_long(mappref, -1), maplength,
+                                            c->prot,
+                                            MAP_COPY|MAP_FILE,
+                                            fd, c->mapoff);
+      if (__glibc_unlikely ((void *) cheri_long(l->l_map_start, -1) == MAP_FAILED))
+        return DL_MAP_SEGMENTS_ERROR_MAP_SEGMENT;
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
       l->l_map_end = l->l_map_start + maplength;
       l->l_addr = l->l_map_start - c->mapstart;
@@ -70,10 +81,17 @@ _dl_map_segments (struct link_map *l, int fd,
              unallocated.  Then jump into the normal segment-mapping loop to
              handle the portion of the segment past the end of the file
              mapping.  */
+#ifndef __CHERI_PURE_CAPABILITY__
           if (__glibc_unlikely
               (__mprotect ((caddr_t) (l->l_addr + c->mapend),
                            loadcmds[nloadcmds - 1].mapstart - c->mapend,
                            PROT_NONE) < 0))
+#else
+          if (__glibc_unlikely
+              (__mprotect ((caddr_t) (cheri_long(l->l_addr + c->mapend, -1)),
+                           loadcmds[nloadcmds - 1].mapstart - c->mapend,
+                           PROT_NONE) < 0))
+#endif /* __CHERI_PURE_CAPABILITY__ */
             return DL_MAP_SEGMENTS_ERROR_MPROTECT;
         }
 
@@ -90,12 +108,21 @@ _dl_map_segments (struct link_map *l, int fd,
   while (c < &loadcmds[nloadcmds])
     {
       if (c->mapend > c->mapstart
+#ifndef __CHERI_PURE_CAPABILITY__
           /* Map the segment contents from the file.  */
           && (__mmap ((void *) (l->l_addr + c->mapstart),
                       c->mapend - c->mapstart, c->prot,
                       MAP_FIXED|MAP_COPY|MAP_FILE,
                       fd, c->mapoff)
               == MAP_FAILED))
+#else
+          /* Map the segment contents from the file.  */
+          && (__mmap ((void *) (cheri_long(l->l_addr + c->mapstart, -1)),
+                      c->mapend - c->mapstart, c->prot,
+                      MAP_FIXED|MAP_COPY|MAP_FILE,
+                      fd, c->mapoff)
+              == MAP_FAILED))
+#endif /* __CHERI_PURE_CAPABILITY__ */
         return DL_MAP_SEGMENTS_ERROR_MAP_SEGMENT;
 
     postmap:
@@ -123,24 +150,44 @@ _dl_map_segments (struct link_map *l, int fd,
               if (__glibc_unlikely ((c->prot & PROT_WRITE) == 0))
                 {
                   /* Dag nab it.  */
+#ifndef __CHERI_PURE_CAPABILITY__
                   if (__mprotect ((caddr_t) (zero
                                              & ~(GLRO(dl_pagesize) - 1)),
+#else
+                  if (__mprotect ((caddr_t) (cheri_long(zero
+                                             & ~(GLRO(dl_pagesize) - 1), -1)),
+#endif /* __CHERI_PURE_CAPABILITY__ */
                                   GLRO(dl_pagesize), c->prot|PROT_WRITE) < 0)
                     return DL_MAP_SEGMENTS_ERROR_MPROTECT;
                 }
+#ifndef __CHERI_PURE_CAPABILITY__
               memset ((void *) zero, '\0', zeropage - zero);
+#else
+              memset ((void *) cheri_long(zero, -1), '\0', zeropage - zero);
+#endif /* __CHERI_PURE_CAPABILITY__ */
               if (__glibc_unlikely ((c->prot & PROT_WRITE) == 0))
+#ifndef __CHERI_PURE_CAPABILITY__
                 __mprotect ((caddr_t) (zero & ~(GLRO(dl_pagesize) - 1)),
                             GLRO(dl_pagesize), c->prot);
+#else
+                __mprotect ((caddr_t) (cheri_long(zero & ~(GLRO(dl_pagesize) - 1), -1)),
+                            GLRO(dl_pagesize), c->prot);
+#endif /* __CHERI_PURE_CAPABILITY__ */
             }
 
           if (zeroend > zeropage)
             {
               /* Map the remaining zero pages in from the zero fill FD.  */
               caddr_t mapat;
+#ifndef __CHERI_PURE_CAPABILITY__
               mapat = __mmap ((caddr_t) zeropage, zeroend - zeropage,
                               c->prot, MAP_ANON|MAP_PRIVATE|MAP_FIXED,
                               -1, 0);
+#else
+              mapat = __mmap ((caddr_t) cheri_long(zeropage, -1), zeroend - zeropage,
+                              c->prot, MAP_ANON|MAP_PRIVATE|MAP_FIXED,
+                              -1, 0);
+#endif /* __CHERI_PURE_CAPABILITY__ */
               if (__glibc_unlikely (mapat == MAP_FAILED))
                 return DL_MAP_SEGMENTS_ERROR_MAP_ZERO_FILL;
             }

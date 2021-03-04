@@ -19,6 +19,8 @@
 /* This file may be included twice, to define both
    `elf_dynamic_do_rel' and `elf_dynamic_do_rela'.  */
 
+#include <cheric.h>
+
 #ifdef DO_RELA
 # define elf_dynamic_do_Rel		elf_dynamic_do_Rela
 # define Rel				Rela
@@ -26,11 +28,19 @@
 # define elf_machine_rel_relative	elf_machine_rela_relative
 #endif
 
+#ifndef __CHERI_PURE_CAPABILITY__
 #ifndef DO_ELF_MACHINE_REL_RELATIVE
 # define DO_ELF_MACHINE_REL_RELATIVE(map, l_addr, relative) \
   elf_machine_rel_relative (l_addr, relative,				      \
 			    (void *) (l_addr + relative->r_offset))
 #endif
+#else
+#ifndef DO_ELF_MACHINE_REL_RELATIVE
+# define DO_ELF_MACHINE_REL_RELATIVE(map, l_addr, relative) \
+  elf_machine_rel_relative (l_addr, relative,				      \
+			    (void *) (cheri_long(l_addr + relative->r_offset, -1)))
+#endif
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 /* Perform the relocations in MAP on the running program image as specified
    by RELTAG, SZTAG.  If LAZY is nonzero, this is the first pass on PLT
@@ -47,8 +57,13 @@ elf_dynamic_do_Rel (struct link_map *map,
 #endif
 		    )
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   const ElfW(Rel) *r = (const void *) reladdr;
   const ElfW(Rel) *end = (const void *) (reladdr + relsize);
+#else
+  const ElfW(Rel) *r = (const void *) cheri_long(reladdr, -1);
+  const ElfW(Rel) *end = (const void *) (cheri_long(reladdr + relsize, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
   ElfW(Addr) l_addr = map->l_addr;
 # if defined ELF_MACHINE_IRELATIVE && !defined RTLD_BOOTSTRAP
   const ElfW(Rel) *r2 = NULL;
@@ -84,8 +99,13 @@ elf_dynamic_do_Rel (struct link_map *map,
   else
 #endif
     {
+#ifndef __CHERI_PURE_CAPABILITY__
       const ElfW(Sym) *const symtab =
 	(const void *) D_PTR (map, l_info[DT_SYMTAB]);
+#else
+      const ElfW(Sym) *const symtab =
+	(const void *) cheri_long(D_PTR (map, l_info[DT_SYMTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
       const ElfW(Rel) *relative = r;
       r += nrelative;
 
@@ -123,7 +143,11 @@ elf_dynamic_do_Rel (struct link_map *map,
 #endif
 	{
 	  const ElfW(Half) *const version =
+#ifndef __CHERI_PURE_CAPABILITY__
 	    (const void *) D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]);
+#else
+	    (const void *) cheri_long(D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	  for (; r < end; ++r)
 	    {
@@ -138,9 +162,15 @@ elf_dynamic_do_Rel (struct link_map *map,
 #endif
 
 	      ElfW(Half) ndx = version[ELFW(R_SYM) (r->r_info)] & 0x7fff;
+#ifndef __CHERI_PURE_CAPABILITY__
 	      elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)],
 			       &map->l_versions[ndx],
 			       (void *) (l_addr + r->r_offset), skip_ifunc
+#else
+	      elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)],
+			       &map->l_versions[ndx],
+			       (void *) (cheri_long(l_addr + r->r_offset, -1)), skip_ifunc
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #ifndef NESTING
 			       , boot_map
 #endif
@@ -154,11 +184,19 @@ elf_dynamic_do_Rel (struct link_map *map,
 		{
 		  ElfW(Half) ndx
 		    = version[ELFW(R_SYM) (r2->r_info)] & 0x7fff;
+#ifndef __CHERI_PURE_CAPABILITY__
 		  elf_machine_rel (map, r2,
 				   &symtab[ELFW(R_SYM) (r2->r_info)],
 				   &map->l_versions[ndx],
 				   (void *) (l_addr + r2->r_offset),
 				   skip_ifunc
+#else
+		  elf_machine_rel (map, r2,
+				   &symtab[ELFW(R_SYM) (r2->r_info)],
+				   &map->l_versions[ndx],
+				   (void *) (cheri_long(l_addr + r2->r_offset, -1)),
+				   skip_ifunc
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #ifndef NESTING
 				   , boot_map
 #endif
@@ -179,8 +217,13 @@ elf_dynamic_do_Rel (struct link_map *map,
 	      }
 	    else
 # endif
+#ifndef __CHERI_PURE_CAPABILITY__
 	      elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)], NULL,
 			       (void *) (l_addr + r->r_offset), skip_ifunc
+#else
+	      elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)], NULL,
+			       (void *) (cheri_long(l_addr + r->r_offset, -1)), skip_ifunc
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #ifndef NESTING
 			       , boot_map
 #endif

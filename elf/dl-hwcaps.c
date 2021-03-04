@@ -26,6 +26,8 @@
 #include <dl-procinfo.h>
 #include <dl-hwcaps.h>
 
+#include <cheric.h>
+
 #ifdef _DL_FIRST_PLATFORM
 # define _DL_FIRST_EXTRA (_DL_FIRST_PLATFORM + _DL_PLATFORMS_COUNT)
 #else
@@ -84,12 +86,21 @@ _dl_important_hwcaps (const char *platform, size_t platform_len, size_t *sz,
 	       VENDORLEN (with a real length rounded to ElfW(Word)), followed
 	       by the data of length DATALEN (with a real length rounded to
 	       ElfW(Word)).  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	    const struct
 	    {
 	      ElfW(Word) vendorlen;
 	      ElfW(Word) datalen;
 	      ElfW(Word) type;
 	    } *note = (const void *) start;
+#else
+	    const struct
+	    {
+	      ElfW(Word) vendorlen;
+	      ElfW(Word) datalen;
+	      ElfW(Word) type;
+	    } *note = (const void *) cheri_long(start, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	    while ((ElfW(Addr)) (note + 1) - start < phdr[i].p_memsz)
 	      {
 		/* The layout of the type 2, vendor "GNU" note is as follows:

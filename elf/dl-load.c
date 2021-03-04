@@ -667,9 +667,15 @@ cache_rpath (struct link_map *l,
     }
 
   /* Make sure the cache information is available.  */
+#ifndef __CHERI_PURE_CAPABILITY__
   return decompose_rpath (sp, (const char *) (D_PTR (l, l_info[DT_STRTAB])
 					      + l->l_info[tag]->d_un.d_val),
 			  l, what);
+#else
+  return decompose_rpath (sp, (const char *) (cheri_long(D_PTR (l, l_info[DT_STRTAB])
+					      + l->l_info[tag]->d_un.d_val, -1)),
+			  l, what);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 }
 
 
@@ -756,10 +762,17 @@ _dl_init_paths (const char *llp)
 	{
 	  /* Allocate room for the search path and fill in information
 	     from RUNPATH.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	  decompose_rpath (&l->l_runpath_dirs,
 			   (const void *) (D_PTR (l, l_info[DT_STRTAB])
 					   + l->l_info[DT_RUNPATH]->d_un.d_val),
 			   l, "RUNPATH");
+#else
+	  decompose_rpath (&l->l_runpath_dirs,
+			   (const void *) (cheri_long(D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[DT_RUNPATH]->d_un.d_val, -1)),
+			   l, "RUNPATH");
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  /* During rtld init the memory is allocated by the stub malloc,
 	     prevent any attempt to free it by the normal malloc.  */
 	  l->l_runpath_dirs.malloced = 0;
@@ -775,10 +788,17 @@ _dl_init_paths (const char *llp)
 	    {
 	      /* Allocate room for the search path and fill in information
 		 from RPATH.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	      decompose_rpath (&l->l_rpath_dirs,
 			       (const void *) (D_PTR (l, l_info[DT_STRTAB])
 					       + l->l_info[DT_RPATH]->d_un.d_val),
 			       l, "RPATH");
+#else
+	      decompose_rpath (&l->l_rpath_dirs,
+			       (const void *) (cheri_long(D_PTR (l, l_info[DT_STRTAB])
+					       + l->l_info[DT_RPATH]->d_un.d_val, -1)),
+			       l, "RPATH");
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	      /* During rtld init the memory is allocated by the stub
 		 malloc, prevent any attempt to free it by the normal
 		 malloc.  */
@@ -1052,13 +1072,21 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	      /* Debuginfo only files from "objcopy --only-keep-debug"
 		 contain a PT_DYNAMIC segment with p_filesz == 0.  Skip
 		 such a segment to avoid a crash later.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	      l->l_ld = (void *) ph->p_vaddr;
+#else
+	      l->l_ld = (void *) cheri_long(ph->p_vaddr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	      l->l_ldnum = ph->p_memsz / sizeof (ElfW(Dyn));
 	    }
 	  break;
 
 	case PT_PHDR:
+#ifndef __CHERI_PURE_CAPABILITY__
 	  l->l_phdr = (void *) ph->p_vaddr;
+#else
+	  l->l_phdr = (void *) cheri_long(ph->p_vaddr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  break;
 
 	case PT_LOAD:
@@ -1118,7 +1146,11 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	  l->l_tls_initimage_size = ph->p_filesz;
 	  /* Since we don't know the load address yet only store the
 	     offset.  We will adjust it later.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	  l->l_tls_initimage = (void *) ph->p_vaddr;
+#else
+	  l->l_tls_initimage = (void *) cheri_long(ph->p_vaddr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	  /* If not loading the initial set of shared libraries,
 	     check whether we should permit loading a TLS segment.  */
@@ -1193,7 +1225,11 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	}
     }
   else
+#ifndef __CHERI_PURE_CAPABILITY__
     l->l_ld = (ElfW(Dyn) *) ((ElfW(Addr)) l->l_ld + l->l_addr);
+#else
+    l->l_ld = (ElfW(Dyn) *) (cheri_long((ElfW(Addr)) l->l_ld + l->l_addr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
   elf_get_dynamic_info (l, NULL);
 
@@ -1234,7 +1270,11 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
     }
   else
     /* Adjust the PT_PHDR value by the runtime load address.  */
+#ifndef __CHERI_PURE_CAPABILITY__
     l->l_phdr = (ElfW(Phdr) *) ((ElfW(Addr)) l->l_phdr + l->l_addr);
+#else
+    l->l_phdr = (ElfW(Phdr) *) (cheri_long((ElfW(Addr)) l->l_phdr + l->l_addr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
   if (__glibc_unlikely ((stack_flags &~ GL(dl_stack_flags)) & PF_X))
     {
@@ -1252,7 +1292,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
       if ((mode & (__RTLD_DLOPEN | __RTLD_AUDIT)) == __RTLD_DLOPEN)
 	{
 	  const uintptr_t p = (uintptr_t) &__stack_prot & -GLRO(dl_pagesize);
-	  const size_t s = (uintptr_t) (&__stack_prot + 1) - p;
+	  const size_t s = (unsigned long) (&__stack_prot + 1) - (unsigned long) p;
 
 	  struct link_map *const m = &GL(dl_rtld_map);
 	  const uintptr_t relro_end = ((m->l_addr + m->l_relro_addr
@@ -1366,8 +1406,13 @@ cannot enable executable stack as shared object requires");
      loading.  Add it right away.  */
   if (__glibc_unlikely (GLRO(dl_profile) != NULL)
       && l->l_info[DT_SONAME] != NULL)
+#ifndef __CHERI_PURE_CAPABILITY__
     add_name_to_object (l, ((const char *) D_PTR (l, l_info[DT_STRTAB])
 			    + l->l_info[DT_SONAME]->d_un.d_val));
+#else
+    add_name_to_object (l, ((const char *) cheri_long(D_PTR (l, l_info[DT_STRTAB])
+			    + l->l_info[DT_SONAME]->d_un.d_val, -1)));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 #ifdef DL_AFTER_LOAD
   DL_AFTER_LOAD (l);
@@ -1942,8 +1987,13 @@ _dl_map_object (struct link_map *loader, const char *name,
 	      || l->l_info[DT_SONAME] == NULL)
 	    continue;
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	  soname = ((const char *) D_PTR (l, l_info[DT_STRTAB])
 		    + l->l_info[DT_SONAME]->d_un.d_val);
+#else
+	  soname = ((const char *) cheri_long(D_PTR (l, l_info[DT_STRTAB])
+		    + l->l_info[DT_SONAME]->d_un.d_val, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  if (strcmp (name, soname) != 0)
 	    continue;
 

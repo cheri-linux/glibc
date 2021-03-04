@@ -20,6 +20,7 @@
 #include <string.h>
 #include <ldsodefs.h>
 
+#include <cheric.h>
 
 /* Type of the constructor functions.  */
 typedef void (*fini_t) (void);
@@ -129,19 +130,34 @@ _dl_fini (void)
 		      /* First see whether an array is given.  */
 		      if (l->l_info[DT_FINI_ARRAY] != NULL)
 			{
+#ifndef __CHERI_PURE_CAPABILITY__
 			  ElfW(Addr) *array =
 			    (ElfW(Addr) *) (l->l_addr
 					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr);
+#else
+			  ElfW(Addr) *array =
+			    (ElfW(Addr) *) (cheri_long(l->l_addr
+					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 			  unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
 					    / sizeof (ElfW(Addr)));
 			  while (i-- > 0)
+#ifndef __CHERI_PURE_CAPABILITY__
 			    ((fini_t) array[i]) ();
+#else
+			    ((fini_t) cheri_long(array[i], -1)) ();
+#endif /* __CHERI_PURE_CAPABILITY__ */
 			}
 
 		      /* Next try the old-style destructor.  */
 		      if (l->l_info[DT_FINI] != NULL)
+#ifndef __CHERI_PURE_CAPABILITY__
 			DL_CALL_DT_FINI
 			  (l, l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr);
+#else
+			DL_CALL_DT_FINI
+			  (l, cheri_long(l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 		    }
 
 #ifdef SHARED

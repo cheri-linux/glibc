@@ -523,7 +523,11 @@ _dl_start (void *arg)
   bootstrap_map.l_addr = l_addr;
 
   /* Read our own dynamic section and fill in the info array.  */
+#ifndef __CHERI_PURE_CAPABILITY__
   bootstrap_map.l_ld = (void *) bootstrap_map.l_addr + elf_machine_dynamic ();
+#else
+  bootstrap_map.l_ld = (void *) cheri_long(bootstrap_map.l_addr + elf_machine_dynamic (), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
   /* As a workaround for lld placing _GLOBAL_OFFSET_TABLE at an
      unexpected location, detect when the bootstrap map base and
      dynamic section have the same address, and patch the base value
@@ -531,8 +535,13 @@ _dl_start (void *arg)
      and should go away once lld does the right thing.  */
 #ifdef HAVE_EHDR_START
   extern const ElfW(Ehdr) __ehdr_start __attribute__ ((visibility ("hidden")));
+#ifndef __CHERI_PURE_CAPABILITY__
   if (bootstrap_map.l_ld == ((void *) bootstrap_map.l_addr))
     bootstrap_map.l_addr -= (((char *) bootstrap_map.l_addr) - ((char *) &__ehdr_start));
+#else
+  if (bootstrap_map.l_ld == ((void *) cheri_long(bootstrap_map.l_addr, -1)))
+    bootstrap_map.l_addr -= (((char *) cheri_long(bootstrap_map.l_addr, -1)) - ((char *) &__ehdr_start));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #endif
   elf_get_dynamic_info (&bootstrap_map, NULL);
 
@@ -695,7 +704,11 @@ find_needed (const char *name)
 static int
 match_version (const char *string, struct link_map *map)
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   const char *strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
+#else
+  const char *strtab = (const void *) cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
   ElfW(Verdef) *def;
 
 #define VERDEFTAG (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (DT_VERDEF))
@@ -703,8 +716,13 @@ match_version (const char *string, struct link_map *map)
     /* The file has no symbol versioning.  */
     return 0;
 
+#ifndef __CHERI_PURE_CAPABILITY__
   def = (ElfW(Verdef) *) ((char *) map->l_addr
 			  + map->l_info[VERDEFTAG]->d_un.d_ptr);
+#else
+  def = (ElfW(Verdef) *) ((char *) cheri_long(map->l_addr
+			  + map->l_info[VERDEFTAG]->d_un.d_ptr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
   while (1)
     {
       ElfW(Verdaux) *aux = (ElfW(Verdaux) *) ((char *) def + def->vd_aux);
@@ -1111,6 +1129,7 @@ of this helper program; chances are you did not intend to run this program.\n\
       /* Now the map for the main executable is available.  */
       main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
 
+#ifndef __CHERI_PURE_CAPABILITY__
       if (__builtin_expect (mode, normal) == normal
 	  && GL(dl_rtld_map).l_info[DT_SONAME] != NULL
 	  && main_map->l_info[DT_SONAME] != NULL
@@ -1118,6 +1137,15 @@ of this helper program; chances are you did not intend to run this program.\n\
 		     + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_val,
 		     (const char *) D_PTR (main_map, l_info[DT_STRTAB])
 		     + main_map->l_info[DT_SONAME]->d_un.d_val) == 0)
+#else
+      if (__builtin_expect (mode, normal) == normal
+	  && GL(dl_rtld_map).l_info[DT_SONAME] != NULL
+	  && main_map->l_info[DT_SONAME] != NULL
+	  && strcmp ((const char *) cheri_long(D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
+		     + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_val, -1),
+		     (const char *) cheri_long(D_PTR (main_map, l_info[DT_STRTAB])
+		     + main_map->l_info[DT_SONAME]->d_un.d_val, -1)) == 0)
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	_dl_fatal_printf ("loader cannot load itself\n");
 
       phdr = main_map->l_phdr;
@@ -1203,7 +1231,11 @@ of this helper program; chances are you did not intend to run this program.\n\
       case PT_DYNAMIC:
 	/* This tells us where to find the dynamic section,
 	   which tells us everything we need to do.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	main_map->l_ld = (void *) main_map->l_addr + ph->p_vaddr;
+#else
+	main_map->l_ld = (void *) cheri_long(main_map->l_addr + ph->p_vaddr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	break;
       case PT_INTERP:
 	/* This "interpreter segment" was used by the program loader to
@@ -1212,8 +1244,13 @@ of this helper program; chances are you did not intend to run this program.\n\
 	   dlopen call or DT_NEEDED entry, for something that wants to link
 	   against the dynamic linker as a shared library, will know that
 	   the shared object is already loaded.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	_dl_rtld_libname.name = ((const char *) main_map->l_addr
 				 + ph->p_vaddr);
+#else
+	_dl_rtld_libname.name = ((const char *) cheri_long(main_map->l_addr
+				 + ph->p_vaddr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	/* _dl_rtld_libname.next = NULL;	Already zero.  */
 	GL(dl_rtld_map).l_libname = &_dl_rtld_libname;
 
@@ -1277,7 +1314,11 @@ of this helper program; chances are you did not intend to run this program.\n\
 	      main_map->l_tls_firstbyte_offset = (ph->p_vaddr
 						  & (ph->p_align - 1));
 	    main_map->l_tls_initimage_size = ph->p_filesz;
+#ifndef __CHERI_PURE_CAPABILITY__
 	    main_map->l_tls_initimage = (void *) ph->p_vaddr;
+#else
+	    main_map->l_tls_initimage = (void *) cheri_long(ph->p_vaddr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	    /* This image gets the ID one.  */
 	    GL(dl_tls_max_dtv_idx) = main_map->l_tls_modid = 1;
@@ -1316,6 +1357,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 
   /* If the current libname is different from the SONAME, add the
      latter as well.  */
+#ifndef __CHERI_PURE_CAPABILITY__
   if (GL(dl_rtld_map).l_info[DT_SONAME] != NULL
       && strcmp (GL(dl_rtld_map).l_libname->name,
 		 (const char *) D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
@@ -1324,6 +1366,16 @@ of this helper program; chances are you did not intend to run this program.\n\
       static struct libname_list newname;
       newname.name = ((char *) D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
 		      + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_ptr);
+#else
+  if (GL(dl_rtld_map).l_info[DT_SONAME] != NULL
+      && strcmp (GL(dl_rtld_map).l_libname->name,
+		 (const char *) cheri_long(D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
+		 + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_val, -1)) != 0)
+    {
+      static struct libname_list newname;
+newname.name = ((char *) cheri_long(D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
+		      + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_ptr, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
       newname.next = NULL;
       newname.dont_free = 1;
 
@@ -2026,8 +2078,13 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 		  if (dyn == NULL)
 		    continue;
 
+#ifndef __CHERI_PURE_CAPABILITY__
 		  strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
 		  ent = (ElfW(Verneed) *) (map->l_addr + dyn->d_un.d_ptr);
+#else
+		  strtab = (const void *) cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1);
+		  ent = (ElfW(Verneed) *) cheri_long((map->l_addr + dyn->d_un.d_ptr), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 		  if (first)
 		    {
@@ -2090,11 +2147,19 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
     {
       ElfW(Lib) *liblist, *liblistend;
       struct link_map **r_list, **r_listend, *l;
+#ifndef __CHERI_PURE_CAPABILITY__
       const char *strtab = (const void *) D_PTR (main_map, l_info[DT_STRTAB]);
 
       assert (main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)] != NULL);
       liblist = (ElfW(Lib) *)
 		main_map->l_info[ADDRIDX (DT_GNU_LIBLIST)]->d_un.d_ptr;
+#else
+      const char *strtab = (const void *) cheri_long(D_PTR (main_map, l_info[DT_STRTAB]), -1);
+
+      assert (main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)] != NULL);
+      liblist = (ElfW(Lib) *)
+		cheri_long(main_map->l_info[ADDRIDX (DT_GNU_LIBLIST)]->d_un.d_ptr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
       liblistend = (ElfW(Lib) *)
 		   ((char *) liblist +
 		    main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)]->d_un.d_val);
@@ -2173,8 +2238,13 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 
 	  HP_TIMING_NOW (start);
 	  assert (main_map->l_info [VALIDX (DT_GNU_CONFLICTSZ)] != NULL);
+#ifndef __CHERI_PURE_CAPABILITY__
 	  conflict = (ElfW(Rela) *)
 	    main_map->l_info [ADDRIDX (DT_GNU_CONFLICT)]->d_un.d_ptr;
+#else
+	  conflict = (ElfW(Rela) *)
+	    cheri_long(main_map->l_info [ADDRIDX (DT_GNU_CONFLICT)]->d_un.d_ptr, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  conflictend = (ElfW(Rela) *)
 	    ((char *) conflict
 	     + main_map->l_info [VALIDX (DT_GNU_CONFLICTSZ)]->d_un.d_val);

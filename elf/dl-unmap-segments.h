@@ -22,6 +22,8 @@
 #include <link.h>
 #include <sys/mman.h>
 
+#include <cheric.h>
+
 /* _dl_map_segments ensures that any whole pages in gaps between segments
    are filled in with PROT_NONE mappings.  So we can just unmap the whole
    range in one fell swoop.  */
@@ -29,7 +31,11 @@
 static __always_inline void
 _dl_unmap_segments (struct link_map *l)
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   __munmap ((void *) l->l_map_start, l->l_map_end - l->l_map_start);
+#else
+  __munmap ((void *) cheri_long(l->l_map_start, -1), l->l_map_end - l->l_map_start);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 }
 
 #endif  /* dl-unmap-segments.h */

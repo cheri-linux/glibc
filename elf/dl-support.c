@@ -35,6 +35,8 @@
 #include <hp-timing.h>
 #include <stackinfo.h>
 
+#include <cheric.h>
+
 extern char *__progname;
 char **_dl_argv = &__progname;	/* This is checked for some error messages.  */
 
@@ -240,13 +242,21 @@ _dl_aux_init (ElfW(auxv_t) *av)
 	GLRO(dl_clktck) = av->a_un.a_val;
 	break;
       case AT_PHDR:
+#ifndef __CHERI_PURE_CAPABILITY__
 	GL(dl_phdr) = (const void *) av->a_un.a_val;
+#else
+	GL(dl_phdr) = (const void *) cheri_long(av->a_un.a_val, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	break;
       case AT_PHNUM:
 	GL(dl_phnum) = av->a_un.a_val;
 	break;
       case AT_PLATFORM:
+#ifndef __CHERI_PURE_CAPABILITY__
 	GLRO(dl_platform) = (void *) av->a_un.a_val;
+#else
+	GLRO(dl_platform) = (void *) cheri_long(av->a_un.a_val, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	break;
       case AT_HWCAP:
 	GLRO(dl_hwcap) = (unsigned long int) av->a_un.a_val;
@@ -264,7 +274,11 @@ _dl_aux_init (ElfW(auxv_t) *av)
 #endif
 #ifdef NEED_DL_SYSINFO_DSO
       case AT_SYSINFO_EHDR:
+#ifndef __CHERI_PURE_CAPABILITY__
 	GL(dl_sysinfo_dso) = (void *) av->a_un.a_val;
+#else
+	GL(dl_sysinfo_dso) = (void *) cheri_long(av->a_un.a_val, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	break;
 #endif
       case AT_UID:
@@ -289,7 +303,11 @@ _dl_aux_init (ElfW(auxv_t) *av)
 	__libc_enable_secure_decided = 1;
 	break;
       case AT_RANDOM:
+#ifndef __CHERI_PURE_CAPABILITY__
 	_dl_random = (void *) av->a_un.a_val;
+#else
+	_dl_random = (void *) cheri_long(av->a_un.a_val, -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	break;
 # ifdef DL_PLATFORM_AUXV
       DL_PLATFORM_AUXV

@@ -22,6 +22,8 @@
 #include <stddef.h>
 #include <libc-lock.h>
 
+#include <cheric.h>
+
 static void
 cancel_handler (void *arg __attribute__((unused)))
 {
@@ -52,10 +54,17 @@ __dl_iterate_phdr (int (*callback) (struct dl_phdr_info *info,
 	/* We have to count the total number of loaded objects.  */
 	nloaded += GL(dl_ns)[cnt]._ns_nloaded;
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	if (caller >= (const void *) l->l_map_start
 	    && caller < (const void *) l->l_map_end
 	    && (l->l_contiguous
 		|| _dl_addr_inside_object (l, (ElfW(Addr)) caller)))
+#else
+	if (caller >= (const void *) cheri_long(l->l_map_start, -1)
+	    && caller < (const void *) cheri_long(l->l_map_end, -1)
+	    && (l->l_contiguous
+		|| _dl_addr_inside_object (l, (ElfW(Addr)) caller)))
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  ns = cnt;
       }
 #endif

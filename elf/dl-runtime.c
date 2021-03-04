@@ -28,6 +28,8 @@
 #include <tls.h>
 #include <dl-irel.h>
 
+#include <cheric.h>
+
 
 #if (!ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
     || ELF_MACHINE_NO_REL
@@ -64,6 +66,7 @@ _dl_fixup (
 # endif
 	   struct link_map *l, ElfW(Word) reloc_arg)
 {
+#ifndef __CHERI_PURE_CAPABILITY__
   const ElfW(Sym) *const symtab
     = (const void *) D_PTR (l, l_info[DT_SYMTAB]);
   const char *strtab = (const void *) D_PTR (l, l_info[DT_STRTAB]);
@@ -73,6 +76,18 @@ _dl_fixup (
   const ElfW(Sym) *sym = &symtab[ELFW(R_SYM) (reloc->r_info)];
   const ElfW(Sym) *refsym = sym;
   void *const rel_addr = (void *)(l->l_addr + reloc->r_offset);
+#else
+  const ElfW(Sym) *const symtab
+    = (const void *) cheri_long(D_PTR (l, l_info[DT_SYMTAB]), -1);
+  const char *strtab = (const void *) cheri_long(D_PTR (l, l_info[DT_STRTAB]), -1);
+
+  const PLTREL *const reloc
+    = (const void *) cheri_long((D_PTR (l, l_info[DT_JMPREL]) + reloc_offset), -1);
+  const ElfW(Sym) *sym = &symtab[ELFW(R_SYM) (reloc->r_info)];
+  const ElfW(Sym) *refsym = sym;
+  void *const rel_addr = (void *)(cheri_long(l->l_addr + reloc->r_offset, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
+
   lookup_t result;
   DL_FIXUP_VALUE_TYPE value;
 
@@ -87,8 +102,13 @@ _dl_fixup (
 
       if (l->l_info[VERSYMIDX (DT_VERSYM)] != NULL)
 	{
+#ifndef __CHERI_PURE_CAPABILITY__
 	  const ElfW(Half) *vernum =
 	    (const void *) D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]);
+#else
+	  const ElfW(Half) *vernum =
+	    (const void *) cheri_long(D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	  ElfW(Half) ndx = vernum[ELFW(R_SYM) (reloc->r_info)] & 0x7fff;
 	  version = &l->l_versions[ndx];
 	  if (version->hash == 0)
@@ -215,6 +235,7 @@ _dl_profile_fixup (
 
   if (init == 0)
     {
+#ifndef __CHERI_PURE_CAPABILITY__
       /* This is the first time we have to relocate this object.  */
       const ElfW(Sym) *const symtab
 	= (const void *) D_PTR (l, l_info[DT_SYMTAB]);
@@ -222,6 +243,15 @@ _dl_profile_fixup (
 
       const PLTREL *const reloc
 	= (const void *) (D_PTR (l, l_info[DT_JMPREL]) + reloc_offset);
+#else
+      /* This is the first time we have to relocate this object.  */
+      const ElfW(Sym) *const symtab
+	= (const void *) cheri_long(D_PTR (l, l_info[DT_SYMTAB]), -1);
+      const char *strtab = (const char *) cheri_long(D_PTR (l, l_info[DT_STRTAB]), -1);
+
+      const PLTREL *const reloc
+	= (const void *) (cheri_long(D_PTR (l, l_info[DT_JMPREL]), -1) + reloc_offset);
+#endif /* __CHERI_PURE_CAPABILITY__ */
       const ElfW(Sym) *refsym = &symtab[ELFW(R_SYM) (reloc->r_info)];
       const ElfW(Sym) *defsym = refsym;
       lookup_t result;
@@ -237,8 +267,13 @@ _dl_profile_fixup (
 
 	  if (l->l_info[VERSYMIDX (DT_VERSYM)] != NULL)
 	    {
+#ifndef __CHERI_PURE_CAPABILITY__
 	      const ElfW(Half) *vernum =
 		(const void *) D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]);
+#else
+	      const ElfW(Half) *vernum =
+		(const void *) cheri_long(D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 	      ElfW(Half) ndx = vernum[ELFW(R_SYM) (reloc->r_info)] & 0x7fff;
 	      version = &l->l_versions[ndx];
 	      if (version->hash == 0)
@@ -300,9 +335,15 @@ _dl_profile_fixup (
 	  reloc_result->bound = result;
 	  /* Compute index of the symbol entry in the symbol table of
 	     the DSO with the definition.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 	  reloc_result->boundndx = (defsym
 				    - (ElfW(Sym) *) D_PTR (result,
 							   l_info[DT_SYMTAB]));
+#else
+	  reloc_result->boundndx = (defsym
+				    - (ElfW(Sym) *) cheri_long(D_PTR (result,
+							   l_info[DT_SYMTAB]), -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	  /* Determine whether any of the two participating DSOs is
 	     interested in auditing.  */
@@ -321,8 +362,13 @@ _dl_profile_fixup (
 	      assert ((LA_SYMB_NOPLTENTER | LA_SYMB_NOPLTEXIT) == 3);
 	      reloc_result->enterexit = LA_SYMB_NOPLTENTER | LA_SYMB_NOPLTEXIT;
 
+#ifndef __CHERI_PURE_CAPABILITY__
 	      const char *strtab2 = (const void *) D_PTR (result,
 							  l_info[DT_STRTAB]);
+#else
+	      const char *strtab2 = (const void *) cheri_long(D_PTR (result,
+							  l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 	      for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
 		{
@@ -400,17 +446,28 @@ _dl_profile_fixup (
       /* Sanity check:  DL_FIXUP_VALUE_CODE_ADDR (value) should have been
 	 initialized earlier in this function or in another thread.  */
       assert (DL_FIXUP_VALUE_CODE_ADDR (value) != 0);
+#ifndef __CHERI_PURE_CAPABILITY__
       ElfW(Sym) *defsym = ((ElfW(Sym) *) D_PTR (reloc_result->bound,
 						l_info[DT_SYMTAB])
 			   + reloc_result->boundndx);
+#else
+      ElfW(Sym) *defsym = ((ElfW(Sym) *) cheri_long(D_PTR (reloc_result->bound,
+						l_info[DT_SYMTAB])
+			   + reloc_result->boundndx, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
       /* Set up the sym parameter.  */
       ElfW(Sym) sym = *defsym;
       sym.st_value = DL_FIXUP_VALUE_ADDR (value);
 
       /* Get the symbol name.  */
+#ifndef __CHERI_PURE_CAPABILITY__
       const char *strtab = (const void *) D_PTR (reloc_result->bound,
 						 l_info[DT_STRTAB]);
+#else
+      const char *strtab = (const void *) cheri_long(D_PTR (reloc_result->bound,
+						 l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
       const char *symname = strtab + sym.st_name;
 
       /* Keep track of overwritten addresses.  */
@@ -487,17 +544,28 @@ _dl_call_pltexit (struct link_map *l, ElfW(Word) reloc_arg,
   // XXX Maybe the bound information must be stored on the stack since
   // XXX with bind_not a new value could have been stored in the meantime.
   struct reloc_result *reloc_result = &l->l_reloc_result[reloc_index];
+#ifndef __CHERI_PURE_CAPABILITY__
   ElfW(Sym) *defsym = ((ElfW(Sym) *) D_PTR (reloc_result->bound,
 					    l_info[DT_SYMTAB])
 		       + reloc_result->boundndx);
+#else
+  ElfW(Sym) *defsym = ((ElfW(Sym) *) cheri_long(D_PTR (reloc_result->bound,
+					    l_info[DT_SYMTAB])
+		       + reloc_result->boundndx, -1));
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
   /* Set up the sym parameter.  */
   ElfW(Sym) sym = *defsym;
   sym.st_value = DL_FIXUP_VALUE_ADDR (reloc_result->addr);
 
   /* Get the symbol name.  */
+#ifndef __CHERI_PURE_CAPABILITY__
   const char *strtab = (const void *) D_PTR (reloc_result->bound,
 					     l_info[DT_STRTAB]);
+#else
+  const char *strtab = (const void *) cheri_long(D_PTR (reloc_result->bound,
+					     l_info[DT_STRTAB]), -1);
+#endif /* __CHERI_PURE_CAPABILITY__ */
   const char *symname = strtab + sym.st_name;
 
   struct audit_ifaces *afct = GLRO(dl_audit);
