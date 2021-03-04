@@ -76,7 +76,7 @@ elf_machine_matches_host (const ElfW(Ehdr) *ehdr)
 }
 
 /* Return the link-time address of _DYNAMIC.  */
-static inline ElfW(Addr)
+static inline ElfW(Addr) __attribute__((always_inline))
 elf_machine_dynamic (void)
 {
   extern ElfW(Addr) _GLOBAL_OFFSET_TABLE_ __attribute__ ((visibility ("hidden")));
@@ -88,7 +88,7 @@ elf_machine_dynamic (void)
 #define STRINGV_(...) # __VA_ARGS__
 
 /* Return the run-time load address of the shared object.  */
-static inline ElfW(Addr)
+static inline ElfW(Addr) __attribute__((always_inline))
 elf_machine_load_address (void)
 {
   
