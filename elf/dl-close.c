@@ -279,35 +279,20 @@ _dl_close_worker (struct link_map *map, bool force)
 
 	      if (imap->l_info[DT_FINI_ARRAY] != NULL)
 		{
-#ifndef __CHERI_PURE_CAPABILITY__
 		  ElfW(Addr) *array =
-		    (ElfW(Addr) *) (imap->l_addr
-				    + imap->l_info[DT_FINI_ARRAY]->d_un.d_ptr);
-#else
-		  ElfW(Addr) *array =
-		    (ElfW(Addr) *) (cheri_long(imap->l_addr
+		    (ElfW(Addr) *) (CHERI_CAST(imap->l_addr
 				    + imap->l_info[DT_FINI_ARRAY]->d_un.d_ptr, -1));
-#endif /* __CHERI_PURE_CAPABILITY__ */
 		  unsigned int sz = (imap->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
 				     / sizeof (ElfW(Addr)));
 
 		  while (sz-- > 0)
-#ifndef __CHERI_PURE_CAPABILITY__
-		    ((fini_t) array[sz]) ();
-#else
-		    ((fini_t) cheri_long(array[sz], -1)) ();
-#endif /* __CHERI_PURE_CAPABILITY__ */
+		    ((fini_t) CHERI_CAST(array[sz], -1)) ();
 		}
 
 	      /* Next try the old-style destructor.  */
 	      if (imap->l_info[DT_FINI] != NULL)
-#ifndef __CHERI_PURE_CAPABILITY__
-		DL_CALL_DT_FINI (imap, ((void *) imap->l_addr
-			 + imap->l_info[DT_FINI]->d_un.d_ptr));
-#else
-		DL_CALL_DT_FINI (imap, ((void *) cheri_long(imap->l_addr
+		DL_CALL_DT_FINI (imap, ((void *) CHERI_CAST(imap->l_addr
 			 + imap->l_info[DT_FINI]->d_un.d_ptr, -1)));
-#endif /* __CHERI_PURE_CAPABILITY__ */
 	    }
 
 #ifdef SHARED

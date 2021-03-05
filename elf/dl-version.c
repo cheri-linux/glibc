@@ -56,11 +56,7 @@ static int
 match_symbol (const char *name, Lmid_t ns, ElfW(Word) hash, const char *string,
 	      struct link_map *map, int verbose, int weak)
 {
-#ifndef __CHERI_PURE_CAPABILITY__
-  const char *strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
-#else // cheri_long
-  const char *strtab = (const void *) (cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1));
-#endif
+  const char *strtab = (const void *) (CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1));
   ElfW(Addr) def_offset;
   ElfW(Verdef) *def;
   /* Initialize to make the compiler happy.  */
@@ -93,11 +89,7 @@ checking for version `%s' in file %s [%lu] required by file %s [%lu]\n",
   def_offset = map->l_info[VERSYMIDX (DT_VERDEF)]->d_un.d_ptr;
   assert (def_offset != 0);
 
-#ifndef __CHERI_PURE_CAPABILITY__
-  def = (ElfW(Verdef) *) ((char *) map->l_addr + def_offset);
-#else
-  def = (ElfW(Verdef) *) ((char *) cheri_long(map->l_addr + def_offset, -1));
-#endif
+  def = (ElfW(Verdef) *) ((char *) CHERI_CAST(map->l_addr + def_offset, -1));
   while (1)
     {
       /* Currently the version number of the definition entry is 1.
@@ -180,11 +172,7 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
   /* If we don't have a string table, we must be ok.  */
   if (map->l_info[DT_STRTAB] == NULL)
     return 0;
-#ifndef __CHERI_PURE_CAPABILITY__
-  strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
-#else
-  strtab = (const void *) cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1);
-#endif
+  strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
 
   dyn = map->l_info[VERSYMIDX (DT_VERNEED)];
   def = map->l_info[VERSYMIDX (DT_VERDEF)];
@@ -192,11 +180,7 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
   if (dyn != NULL)
     {
       /* This file requires special versions from its dependencies.  */
-#ifndef __CHERI_PURE_CAPABILITY__
-      ElfW(Verneed) *ent = (ElfW(Verneed) *) (map->l_addr + dyn->d_un.d_ptr);
-#else
-      ElfW(Verneed) *ent = (ElfW(Verneed) *) (cheri_long(map->l_addr + dyn->d_un.d_ptr, -1));
-#endif /* __CHERI_PURE_CAPABILITY__ */
+      ElfW(Verneed) *ent = (ElfW(Verneed) *) (CHERI_CAST(map->l_addr + dyn->d_un.d_ptr, -1));
 
       /* Currently the version number of the needed entry is 1.
 	 Make sure all we see is this version.  */
@@ -269,11 +253,7 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
   if (def != NULL)
     {
       ElfW(Verdef) *ent;
-#ifndef __CHERI_PURE_CAPABILITY__
-      ent = (ElfW(Verdef) *) (map->l_addr + def->d_un.d_ptr);
-#else
-      ent = (ElfW(Verdef) *) (cheri_long(map->l_addr + def->d_un.d_ptr, -1));
-#endif
+      ent = (ElfW(Verdef) *) (CHERI_CAST(map->l_addr + def->d_un.d_ptr, -1));
       while (1)
 	{
 	  if ((unsigned int) (ent->vd_ndx & 0x7fff) > ndx_high)
@@ -307,20 +287,12 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
       map->l_nversions = ndx_high + 1;
 
       /* Compute the pointer to the version symbols.  */
-#ifndef __CHERI_PURE_CAPABILITY__
-	map->l_versyms = (void *) D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]);
-#else
-	map->l_versyms = (void *) cheri_long(D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	map->l_versyms = (void *) CHERI_CAST(D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]), -1);
 
       if (dyn != NULL)
 	{
 	  ElfW(Verneed) *ent;
-#ifndef __CHERI_PURE_CAPABILITY__
-	  ent = (ElfW(Verneed) *) (map->l_addr + dyn->d_un.d_ptr);
-#else
-	  ent = (ElfW(Verneed) *) cheri_long((map->l_addr + dyn->d_un.d_ptr), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	  ent = (ElfW(Verneed) *) CHERI_CAST((map->l_addr + dyn->d_un.d_ptr), -1);
 	  while (1)
 	    {
 	      ElfW(Vernaux) *aux;
@@ -358,11 +330,7 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
       if (def != NULL)
 	{
 	  ElfW(Verdef) *ent;
-#ifndef __CHERI_PURE_CAPABILITY__
-	  ent = (ElfW(Verdef)  *) (map->l_addr + def->d_un.d_ptr);
-#else
-	  ent = (ElfW(Verdef)  *) (cheri_long(map->l_addr + def->d_un.d_ptr, -1));
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	  ent = (ElfW(Verdef)  *) (CHERI_CAST(map->l_addr + def->d_un.d_ptr, -1));
 	  while (1)
 	    {
 	      ElfW(Verdaux) *aux;

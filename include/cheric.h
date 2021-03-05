@@ -59,6 +59,14 @@ typedef	void * __capability	otype_t;
 
 #define	__result_use_check	__attribute__((__warn_unused_result__))
 
+#ifndef __CHERI_PURE_CAPABILITY__
+#define CHERI_CAST(ptr, len)	({ (ptr); })
+#else
+#define CHERI_CAST(ptr, len)	({ cheri_long(ptr, len); })
+#endif
+
+
+
 #if __has_feature(capabilities) || defined(__CHERI__)
 
 /*

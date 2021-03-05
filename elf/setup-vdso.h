@@ -45,11 +45,7 @@ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
 	  const ElfW(Phdr) *const ph = &l->l_phdr[i];
 	  if (ph->p_type == PT_DYNAMIC)
 	    {
-#ifndef __CHERI_PURE_CAPABILITY__
-	      l->l_ld = (void *) ph->p_vaddr;
-#else
-	      l->l_ld = (void *) cheri_long(ph->p_vaddr, -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	      l->l_ld = (void *) CHERI_CAST(ph->p_vaddr, -1);
 	      l->l_ldnum = ph->p_memsz / sizeof (ElfW(Dyn));
 	    }
 	  else if (ph->p_type == PT_LOAD)
@@ -70,11 +66,7 @@ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
       l->l_addr = l->l_map_start - l->l_addr;
       l->l_map_end += l->l_addr;
       l->l_text_end += l->l_addr;
-#ifndef __CHERI_PURE_CAPABILITY__
-      l->l_ld = (void *) ((ElfW(Addr)) l->l_ld + l->l_addr);
-#else
-      l->l_ld = (void *) cheri_long(((ElfW(Addr)) l->l_ld + l->l_addr), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+      l->l_ld = (void *) CHERI_CAST(((ElfW(Addr)) l->l_ld + l->l_addr), -1);
       elf_get_dynamic_info (l, dyn_temp);
       _dl_setup_hash (l);
       l->l_relocated = 1;
@@ -97,13 +89,8 @@ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
 	{
 	  /* Work around a kernel problem.  The kernel cannot handle
 	     addresses in the vsyscall DSO pages in writev() calls.  */
-#ifndef __CHERI_PURE_CAPABILITY__
-	  const char *dsoname = ((char *) D_PTR (l, l_info[DT_STRTAB])
+	  const char *dsoname = ((char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), -1)
 				 + l->l_info[DT_SONAME]->d_un.d_val);
-#else
-	  const char *dsoname = ((char *) cheri_long(D_PTR (l, l_info[DT_STRTAB]), -1)
-				 + l->l_info[DT_SONAME]->d_un.d_val);
-#endif /* __CHERI_PURE_CAPABILITY__ */
 	  size_t len = strlen (dsoname) + 1;
 	  char *copy = malloc (len);
 	  if (copy == NULL)

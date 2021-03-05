@@ -62,7 +62,7 @@ _dl_discover_osversion (void)
 	  {
 	    const ElfW(Addr) start = (phdr[i].p_vaddr
 				      + GLRO(dl_sysinfo_map)->l_addr);
-	    const ElfW(Nhdr) *note = (const void *) cheri_long(start, -1);
+	    const ElfW(Nhdr) *note = (const void *) CHERI_CAST(start, -1);
 	    while ((ElfW(Addr)) (note + 1) - start < phdr[i].p_memsz)
 	      {
 		if (!memcmp (note, &expected_note, sizeof expected_note))

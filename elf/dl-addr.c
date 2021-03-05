@@ -29,23 +29,14 @@ determine_info (const ElfW(Addr) addr, struct link_map *match, Dl_info *info,
 {
   /* Now we know what object the address lies in.  */
   info->dli_fname = match->l_name;
-#ifndef __CHERI_PURE_CAPABILITY__
-  info->dli_fbase = (void *) match->l_map_start;
-#else
-  info->dli_fbase = (void *) cheri_long(match->l_map_start, -1);
-#endif
+  info->dli_fbase = (void *) CHERI_CAST(match->l_map_start, -1);
   /* If this is the main program the information is incomplete.  */
   if (__builtin_expect (match->l_name[0], 'a') == '\0'
       && match->l_type == lt_executable)
     info->dli_fname = _dl_argv[0];
 
-#ifndef __CHERI_PURE_CAPABILITY__
-  const ElfW(Sym) *symtab = (const ElfW(Sym) *) D_PTR (match, l_info[DT_SYMTAB]);
-  const char *strtab = (const char *) D_PTR (match, l_info[DT_STRTAB]);
-#else
-  const ElfW(Sym) *symtab = (const ElfW(Sym) *) cheri_long(D_PTR (match, l_info[DT_SYMTAB]), -1);
-  const char *strtab = (const char *) cheri_long(D_PTR (match, l_info[DT_STRTAB]), -1);
-#endif
+  const ElfW(Sym) *symtab = (const ElfW(Sym) *) CHERI_CAST(D_PTR (match, l_info[DT_SYMTAB]), -1);
+  const char *strtab = (const char *) CHERI_CAST(D_PTR (match, l_info[DT_STRTAB]), -1);
 
   ElfW(Word) strtabsize = match->l_info[DT_STRSZ]->d_un.d_val;
 
@@ -83,15 +74,9 @@ determine_info (const ElfW(Addr) addr, struct link_map *match, Dl_info *info,
   else
     {
       const ElfW(Sym) *symtabend;
-      if (match->l_info[DT_HASH] != NULL) {
-#ifndef __CHERI_PURE_CAPABILITY__
-	symtabend = (symtab
-		     + ((Elf_Symndx *) D_PTR (match, l_info[DT_HASH]))[1]);
-#else
-symtabend = (symtab
-		     + ((Elf_Symndx *) cheri_long(D_PTR (match, l_info[DT_HASH]), -1))[1]);
-#endif
-      }
+      if (match->l_info[DT_HASH] != NULL)
+        symtabend = (symtab
+		     + ((Elf_Symndx *) CHERI_CAST(D_PTR (match, l_info[DT_HASH]), -1))[1]);
       else
 	/* There is no direct way to determine the number of symbols in the
 	   dynamic symbol table and no hash table is present.  The ELF

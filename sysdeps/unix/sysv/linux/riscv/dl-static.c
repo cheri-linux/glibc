@@ -50,11 +50,7 @@ _dl_unprotect_relro (struct link_map *l)
 		    & ~(GLRO(dl_pagesize) - 1));
 
   if (start != end)
-#ifndef __CHERI_PURE_CAPABILITY__
-    __mprotect ((void *) start, end - start, PROT_READ | PROT_WRITE);
-#else
-    __mprotect ((void *) cheri_long(start, -1), end - start, PROT_READ | PROT_WRITE);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+    __mprotect ((void *) CHERI_CAST(start, -1), end - start, PROT_READ | PROT_WRITE);
 }
 
 void

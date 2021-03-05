@@ -74,13 +74,8 @@ typedef struct link_map *lookup_t;
    to the actual code of the function but rather an architecture
    specific descriptor. */
 #ifndef ELF_FUNCTION_PTR_IS_SPECIAL
-#ifndef __CHERI_PURE_CAPABILITY__ 
 # define DL_SYMBOL_ADDRESS(map, ref) \
- (void *) (LOOKUP_VALUE_ADDRESS (map) + ref->st_value)
-#else
-# define DL_SYMBOL_ADDRESS(map, ref) \
- (void *) (cheri_long(LOOKUP_VALUE_ADDRESS (map) + ref->st_value, -1)) // Needs #include <cheric.h> 
-#endif
+ (void *) (CHERI_CAST(LOOKUP_VALUE_ADDRESS (map) + ref->st_value, -1)) 
 # define DL_LOOKUP_ADDRESS(addr) ((ElfW(Addr)) (addr))
 # define DL_CALL_DT_INIT(map, start, argc, argv, env) \
  ((init_t) (start)) (argc, argv, env)

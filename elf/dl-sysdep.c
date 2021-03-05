@@ -121,11 +121,7 @@ _dl_sysdep_start (void **start_argptr,
     switch (av->a_type)
       {
       case AT_PHDR:
-  #ifndef __CHERI_PURE_CAPABILITY__
-	phdr = (void *) av->a_un.a_val;
-  #else
-	phdr = (void *) cheri_long(av->a_un.a_val, -1);
-  #endif
+	phdr = (void *) CHERI_CAST(av->a_un.a_val, -1);
 	break;
       case AT_PHNUM:
 	phnum = av->a_un.a_val;
@@ -158,11 +154,7 @@ _dl_sysdep_start (void **start_argptr,
 	__libc_enable_secure = av->a_un.a_val;
 	break;
       case AT_PLATFORM:
-#ifndef __CHERI_PURE_CAPABILITY__
-	GLRO(dl_platform) = (void *) av->a_un.a_val;
-#else
-	GLRO(dl_platform) = (void *) cheri_long(av->a_un.a_val, -1);
-#endif
+	GLRO(dl_platform) = (void *) CHERI_CAST(av->a_un.a_val, -1);
 	break;
       case AT_HWCAP:
 	GLRO(dl_hwcap) = (unsigned long int) av->a_un.a_val;
@@ -183,19 +175,11 @@ _dl_sysdep_start (void **start_argptr,
 #endif
 #ifdef NEED_DL_SYSINFO_DSO
       case AT_SYSINFO_EHDR:
-#ifndef __CHERI_PURE_CAPABILITY__
-	GLRO(dl_sysinfo_dso) = (void *) av->a_un.a_val;
-#else
-	GLRO(dl_sysinfo_dso) = (void *) cheri_long(av->a_un.a_val, -1);
-#endif
+	GLRO(dl_sysinfo_dso) = (void *) CHERI_CAST(av->a_un.a_val, -1);
   break;
 #endif
       case AT_RANDOM:
-#ifndef __CHERI_PURE_CAPABILITY__
-	_dl_random = (void *) av->a_un.a_val;
-#else
-	_dl_random = (void *) cheri_long(av->a_un.a_val, -1);
-#endif
+	_dl_random = (void *) CHERI_CAST(av->a_un.a_val, -1);
   break;
 #ifdef DL_PLATFORM_AUXV
       DL_PLATFORM_AUXV
@@ -347,11 +331,7 @@ _dl_show_auxv (void)
       if (idx < sizeof (auxvars) / sizeof (auxvars[0])
 	  && auxvars[idx].form != unknown)
 	{
-#ifndef __CHERI_PURE_CAPABILITY__
-	  const char *val = (char *) av->a_un.a_val;
-#else
-	  const char *val = (char *) cheri_long(av->a_un.a_val, -1);
-#endif
+	  const char *val = (char *) CHERI_CAST(av->a_un.a_val, -1);
 
 	  if (__builtin_expect (auxvars[idx].form, dec) == dec)
 	    val = _itoa ((unsigned long int) av->a_un.a_val,

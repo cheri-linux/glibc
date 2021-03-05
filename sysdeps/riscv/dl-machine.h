@@ -280,11 +280,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	size_t size = sym->st_size;
 	if (__glibc_unlikely (sym->st_size != refsym->st_size))
 	  {
-#ifndef __CHERI_PURE_CAPABILITY__
-	    const char *strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
-#else
-	    const char *strtab = (const void *) cheri_long(D_PTR (map, l_info[DT_STRTAB]), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	    const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
 	    if (sym->st_size > refsym->st_size)
 	      size = refsym->st_size;
 	    if (sym->st_size > refsym->st_size || GLRO(dl_verbose))
@@ -294,11 +290,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 				strtab + refsym->st_name);
 	  }
 
-#ifndef __CHERI_PURE_CAPABILITY__
-	memcpy (reloc_addr, (void *)value, size);
-#else
-	memcpy (reloc_addr, (void *)cheri_long(value, -1), size);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+	memcpy (reloc_addr, (void *)CHERI_CAST(value, -1), size);
 	break;
       }
 #endif
@@ -350,7 +342,7 @@ __attribute__ ((always_inline))
 elf_machine_lazy_rel (struct link_map *map, ElfW(Addr) l_addr,
 		      const ElfW(Rela) *reloc, int skip_ifunc)
 {
-  ElfW(Addr) *const reloc_addr = (void *) (cheri_long(l_addr + reloc->r_offset, -1));
+  ElfW(Addr) *const reloc_addr = (void *) (CHERI_CAST(l_addr + reloc->r_offset, -1));
   const unsigned int r_type = ELFW (R_TYPE) (reloc->r_info);
 
   /* Check for unexpected PLT reloc type.  */
@@ -380,11 +372,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
   if (l->l_info[DT_JMPREL])
     {
       extern void _dl_runtime_resolve (void) __attribute__ ((visibility ("hidden")));
-#ifndef __CHERI_PURE_CAPABILITY__
-      ElfW(Addr) *gotplt = (ElfW(Addr) *) D_PTR (l, l_info[DT_PLTGOT]);
-#else
-      ElfW(Addr) *gotplt = (ElfW(Addr) *) cheri_long(D_PTR (l, l_info[DT_PLTGOT]), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+      ElfW(Addr) *gotplt = (ElfW(Addr) *) CHERI_CAST(D_PTR (l, l_info[DT_PLTGOT]), -1);
       /* If a library is prelinked but we have to relocate anyway,
 	 we have to be able to undo the prelinking of .got.plt.
 	 The prelinker saved the address of .plt for us here.  */

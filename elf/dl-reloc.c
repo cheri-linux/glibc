@@ -233,13 +233,8 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 	    newp = (struct textrels *) alloca (sizeof (*newp));
 	    newp->len = ALIGN_UP (ph->p_vaddr + ph->p_memsz, GLRO(dl_pagesize))
 			- ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize));
-#ifndef __CHERI_PURE_CAPABILITY__
 	    newp->start = PTR_ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize))
-			  + (caddr_t) l->l_addr;
-#else
-	    newp->start = PTR_ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize))
-			  + (caddr_t) cheri_long(l->l_addr, -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+			  + (caddr_t) CHERI_CAST(l->l_addr, -1);
 
 	    if (__mprotect (newp->start, newp->len, PROT_READ|PROT_WRITE) < 0)
 	      {
@@ -302,11 +297,7 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 
     glob_l = l;
     glob_scope = scope;
-#ifndef __CHERI_PURE_CAPABILITY__
-    glob_strtab = (const void *) D_PTR (glob_l, l_info[DT_STRTAB]);
-#else
-    glob_strtab = (const void *) cheri_long(D_PTR (glob_l, l_info[DT_STRTAB]), -1);
-#endif /* __CHERI_PURE_CAPABILITY__ */
+    glob_strtab = (const void *) CHERI_CAST(D_PTR (glob_l, l_info[DT_STRTAB]), -1);
 
 #endif /* NESTING */
 
@@ -377,11 +368,7 @@ _dl_protect_relro (struct link_map *l)
 			       + l->l_relro_size),
 			      GLRO(dl_pagesize));
   if (start != end
-#ifndef __CHERI_PURE_CAPABILITY__
-      && __mprotect ((void *) start, end - start, PROT_READ) < 0)
-#else
-      && __mprotect ((void *) cheri_long(start, -1), end - start, PROT_READ) < 0)
-#endif /* __CHERI_PURE_CAPABILITY__ */
+      && __mprotect ((void *) CHERI_CAST(start, -1), end - start, PROT_READ) < 0)
     {
       static const char errstring[] = N_("\
 cannot apply additional memory protection after relocation");
