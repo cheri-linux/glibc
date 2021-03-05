@@ -3795,6 +3795,8 @@ enum
 #define R_RISCV_TLS_TPREL32  10
 #define R_RISCV_TLS_TPREL64  11
 
+#define R_RISCV_CHERI_CAPABILITY 193
+
 /* BPF specific declarations.  */
 
 #define R_BPF_NONE		0	/* No reloc */

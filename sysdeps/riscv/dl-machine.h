@@ -323,6 +323,15 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
     case R_RISCV_NONE:
       break;
 
+#ifdef __CHERI_PURE_CAPABILITY__
+	case R_RISCV_CHERI_CAPABILITY:
+	  // sym_val_p ~> (sym_map->l_addr + sym->st_value) type: (void*) in musl
+	  // in musl: *(void**) reloc_addr = sym_val_p
+	  // TODO cheri: length of cap
+	  if (sym != NULL)
+		  *(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, -1);
+	  break;
+#endif
     default:
       _dl_reloc_bad_type (map, r_type, 0);
       break;
