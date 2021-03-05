@@ -43,7 +43,8 @@
 #include <stackinfo.h>
 
 #ifdef __CHERI_PURE_CAPABILITY__
-#include <cheri_init_globals.h>
+#include <cheri_globals.h>
+#include <cheric.h>
 #endif
 
 #include <assert.h>
@@ -331,9 +332,9 @@ DL_SYSINFO_IMPLEMENTATION
 #ifdef PI_STATIC_AND_HIDDEN
 /* cheri requires capability initialization for globals early on and 
    does not work with the global map early on, hence use bootstrap map */
-#ifndef __CHERI_PURE_CAPABILITY__
+//#ifndef __CHERI_PURE_CAPABILITY__
 # define DONT_USE_BOOTSTRAP_MAP	1
-#endif
+//#endif
 #endif
 
 #ifdef DONT_USE_BOOTSTRAP_MAP
@@ -514,9 +515,12 @@ _dl_start (void *arg)
 
   ElfW(Addr) l_addr = elf_machine_load_address ();
 
-  /* This would be the right place to init globals for cheri if we 
-     want to get rid of the bootstrap map, i.e. set DONT_USE_BOOTSTRAP_MAP */
-  //cheri_init_globals();
+#ifdef __CHERI_PURE_CAPABILITY__
+  /* This should be the right place to init globals for cheri if we 
+     want to get rid of the bootstrap map, i.e. set DONT_USE_BOOTSTRAP_MAP
+	 TODO: Bound caps similar to __cheri_init_globals */
+  __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),l_addr);
+#endif
 
   /* Figure out the run-time load address of the dynamic linker itself.  */
   //bootstrap_map.l_addr = elf_machine_load_address ();
