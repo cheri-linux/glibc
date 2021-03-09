@@ -66,6 +66,7 @@ rtld_hidden_data_def(__libc_stack_end)
 void *_dl_random attribute_relro = NULL;
 
 #ifndef DL_FIND_ARG_COMPONENTS
+#ifndef __CHERI_PURE_CAPABILITY__
 # define DL_FIND_ARG_COMPONENTS(cookie, argc, argv, envp, auxp)	\
   do {									      \
     void **_tmp;							      \
@@ -76,6 +77,18 @@ void *_dl_random attribute_relro = NULL;
       continue;								      \
     (auxp) = (void *) ++_tmp;						      \
   } while (0)
+#else /* __CHERI_PURE_CAPABILITY__ */
+# define DL_FIND_ARG_COMPONENTS(cookie, argc, argv, envp, auxp)	\
+  do {									      \
+    long int *_tmp; \
+    (argc) = *(long int *) cookie;					      \
+    (argv) = ((char **) cookie) + 1;			      \
+    (envp) = (argv) + (argc) + 1;					      \
+    for (_tmp = (long int*) (envp); *_tmp; _tmp+=2)			      \
+      continue;								      \
+    (auxp) = (void *) ((long int *)_tmp+1);						      \
+  } while (0)
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #endif
 
 #ifndef DL_STACK_END
