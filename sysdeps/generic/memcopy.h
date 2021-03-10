@@ -41,6 +41,7 @@
 #include <sys/cdefs.h>
 #include <endian.h>
 #include <pagecopy.h>
+#include <stdint.h>
 
 /* The macros defined in this file are:
 
@@ -59,7 +60,7 @@
 /* Type to use for aligned memory operations.
    This should normally be the biggest type supported by a single load
    and store.  */
-#define	op_t	unsigned long int
+#define	op_t unsigned long int
 #define OPSIZ	(sizeof(op_t))
 
 /* Type to use for unaligned operations.  */

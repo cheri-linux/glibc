@@ -20,14 +20,15 @@
 
 #include <string.h>
 #include <memcopy.h>
+#include <stdint.h>
 
 #undef memcpy
 
 void *
 memcpy (void *dstpp, const void *srcpp, size_t len)
 {
-  unsigned long int dstp = (long int) dstpp;
-  unsigned long int srcp = (long int) srcpp;
+  uintptr_t dstp = (uintptr_t) dstpp;
+  uintptr_t srcp = (uintptr_t) srcpp;
 
   /* Copy from the beginning to the end.  */
 
