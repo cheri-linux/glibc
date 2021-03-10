@@ -160,7 +160,9 @@ elf_machine_load_address (void)
 	cllc ct0, _dl_start\n\
 	cjalr ct0 \n\
 	# Stash user entry point in s0.\n\
-	cmove cs0, ca0\n\
+  auipcc cs0, 0\n\
+  csetaddr cs0, cs0, a0\n\
+	# ca0 is not a capability cmove cs0, ca0\n\
 	# See if we were run as a command with the executable file\n\
 	# name as an extra leading argument.\n\
 	1: auipcc ca0, %pcrel_hi(_dl_skip_args)\n\
