@@ -1410,7 +1410,13 @@ newname.name = ((char *) CHERI_CAST(D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
      lowest-addressed PT_LOAD segment.  */
 #ifdef HAVE_EHDR_START
   extern const ElfW(Ehdr) __ehdr_start __attribute__ ((visibility ("hidden")));
+  #ifndef __CHERI_PURE_CAPABILITY__
   rtld_ehdr = &__ehdr_start;
+  #else
+  uintptr_t ehdr_addr;
+  asm ("cllc %0, __ehdr_start" : "=C" (ehdr_addr));
+  rtld_ehdr = (ElfW(Ehdr) *) ehdr_addr;
+  #endif
 #else
   rtld_ehdr = (void *) GL(dl_rtld_map).l_map_start;
 #endif
