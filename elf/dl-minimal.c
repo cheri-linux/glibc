@@ -52,20 +52,25 @@ malloc (size_t n)
       /* Consume any unused space in the last page of our data segment.  */
       extern int _end attribute_hidden;
       alloc_ptr = &_end;
-      alloc_end = (void *) 0 + (((alloc_ptr - (void *) 0)
+ //     alloc_end = (void *) 0 + (((alloc_ptr - (void *) 0)
+	//			 + GLRO(dl_pagesize) - 1)
+	//			& ~(GLRO(dl_pagesize) - 1));
+      alloc_end = ((uintptr_t) alloc_ptr
 				 + GLRO(dl_pagesize) - 1)
-				& ~(GLRO(dl_pagesize) - 1));
+				& ~((uintptr_t) GLRO(dl_pagesize) - 1);
     }
 
   /* Make sure the allocation pointer is ideally aligned.  */
-  alloc_ptr = (void *) 0 + (((alloc_ptr - (void *) 0) + MALLOC_ALIGNMENT - 1)
-			    & ~(MALLOC_ALIGNMENT - 1));
+  //alloc_ptr = (void *) 0 + (((alloc_ptr - (void *) 0) + MALLOC_ALIGNMENT - 1)
+		//	    & ~(MALLOC_ALIGNMENT - 1));
+  alloc_ptr = ((uintptr_t) alloc_ptr + MALLOC_ALIGNMENT - 1)
+			    & ~((uintptr_t) MALLOC_ALIGNMENT - 1);
 
   if (alloc_ptr + n >= alloc_end || n >= -(uintptr_t) alloc_ptr)
     {
       /* Insufficient space left; allocate another page plus one extra
 	 page to reduce number of mmap calls.  */
-      caddr_t page;
+      void *page;
       size_t nup = (n + GLRO(dl_pagesize) - 1) & ~(GLRO(dl_pagesize) - 1);
       if (__glibc_unlikely (nup == 0 && n != 0))
 	return NULL;
@@ -74,14 +79,16 @@ malloc (size_t n)
 		     MAP_ANON|MAP_PRIVATE, -1, 0);
       if (page == MAP_FAILED)
 	return NULL;
+      page = CHERI_CAST(page, -1);
       if (page != alloc_end)
 	alloc_ptr = page;
       alloc_end = page + nup;
     }
 
-  alloc_last_block = (void *) alloc_ptr;
+  alloc_last_block = alloc_ptr;
   alloc_ptr += n;
-  return alloc_last_block;
+  /* return a bounded cap */
+  return CHERI_CAST(alloc_last_block,n);
 }
 
 /* We use this function occasionally since the real implementation may
