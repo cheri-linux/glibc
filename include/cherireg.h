@@ -35,11 +35,15 @@
  * The size of in-memory capabilities in bytes; minimum alignment is also
  * assumed to be this size.
  */
-#if defined(_MIPS_SZCAP) && (_MIPS_SZCAP != 128) && (_MIPS_SZCAP != 256)
-#error "_MIPS_SZCAP defined but neither 128 nor 256"
+// TODO: this should be a compiler define, see clang/lib/Basic/Targets/Mips.cpp,
+// but does not seem to work
+#define _RISCV_SZCAP 128
+
+#if defined(_RISCV_SZCAP) && (_RISCV_SZCAP != 128) && (_RISCV_SZCAP != 256)
+#error "_RISCV_SZCAP defined but neither 128 nor 256"
 #endif
 
-#if defined(CPU_CHERI128) || (defined(_MIPS_SZCAP) && (_MIPS_SZCAP == 128))
+#if defined(CPU_CHERI128) || (defined(_RISCV_SZCAP) && (_RISCV_SZCAP == 128))
 #define	CHERICAP_SIZE   16
 #define	CHERICAP_SHIFT	4
 #else
@@ -304,7 +308,7 @@
  * A blend of hardware and software allocation of capability registers.
  * Ideally, this list wouldn't exist here, but be purely in the assembler.
  */
-#define	CHERI_CR_C0	0	/*   MIPS fetch/load/store capability. */
+#define	CHERI_CR_C0	0	/*   RISCV fetch/load/store capability. */
 #define	CHERI_CR_DDC	CHERI_CR_C0
 #define	CHERI_CR_C1	1
 #define	CHERI_CR_C2	2

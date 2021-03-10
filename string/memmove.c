@@ -39,16 +39,17 @@
 #define MEMMOVE memmove
 #endif
 
+#ifndef __CHERI_PURE_CAPABILITY__
 rettype
 inhibit_loop_to_libcall
 MEMMOVE (a1const void *a1, a2const void *a2, size_t len)
 {
-  unsigned long int dstp = (long int) dest;
-  unsigned long int srcp = (long int) src;
+  intptr_t dstp = (intptr_t) dest;
+  intptr_t srcp = (intptr_t) src;
 
   /* This test makes the forward copying code be used whenever possible.
      Reduces the working set.  */
-  if (dstp - srcp >= len)	/* *Unsigned* compare!  */
+  if ((size_t)dstp - (size_t)srcp >= len)	/* *Unsigned* compare!  */
     {
       /* Copy from the beginning to the end.  */
 
@@ -110,6 +111,29 @@ MEMMOVE (a1const void *a1, a2const void *a2, size_t len)
 
   RETURN (dest);
 }
+#else /* __CHERI_PURE_CAPABILITY__ */
+#define __CAP_SIZE	(_RISCV_SZCAP/8)
+
+void *memcpy_reverse (void *__restrict, const void *__restrict, size_t);
+
+rettype
+inhibit_loop_to_libcall
+MEMMOVE (a1const void *a1, a2const void *a2, size_t len)
+{
+	char *d = a1;
+	const char *s = a2;
+
+	if (d == s) return d;
+
+	if (d < s) {
+		return memcpy(d, s, len);
+	} else {
+		return memcpy_reverse(d, s, len);
+	}
+	return dest;
+}
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #ifndef memmove
 libc_hidden_builtin_def (memmove)
 #endif

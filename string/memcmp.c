@@ -82,7 +82,7 @@ typedef unsigned char byte;
 
    3. Compare the few remaining bytes.  */
 
-#ifndef WORDS_BIGENDIAN
+#if !defined(WORDS_BIGENDIAN) && !defined(__CHERI_PURE_CAPABILITY__)
 /* memcmp_bytes -- Compare A and B bytewise in the byte order of the machine.
    A and B are known to be different.
    This is needed only on little-endian machines.  */
@@ -108,6 +108,7 @@ memcmp_bytes (op_t a, op_t b)
 }
 #endif
 
+#if !defined(__CHERI_PURE_CAPABILITY__)
 static int memcmp_common_alignment (long, long, size_t) __THROW;
 
 /* memcmp_common_alignment -- Compare blocks at SRCP1 and SRCP2 with LEN `op_t'
@@ -354,6 +355,16 @@ MEMCMP (const void *s1, const void *s2, size_t len)
 
   return 0;
 }
+#else /* __CHERI_PURE_CAPABILITY__ */
+int
+MEMCMP (const void *s1, const void *s2, size_t len)
+{
+	const unsigned char *l=s1, *r=s2;
+	for (; len && *l == *r; len--, l++, r++);
+	return len ? *l-*r : 0;
+}
+#endif
+
 libc_hidden_builtin_def(memcmp)
 #ifdef weak_alias
 # undef bcmp

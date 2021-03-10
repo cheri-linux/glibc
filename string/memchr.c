@@ -62,6 +62,7 @@ MEMCHR (void const *s, int c_in, size_t n)
 
   c = (unsigned char) c_in;
 
+#ifndef __CHERI_PURE_CAPABILITY__
   /* Handle the first few bytes by reading one byte at a time.
      Do this until CHAR_PTR is aligned on a longword boundary.  */
   for (char_ptr = (const unsigned char *) s;
@@ -140,6 +141,7 @@ MEMCHR (void const *s, int c_in, size_t n)
     }
 
   char_ptr = (const unsigned char *) longword_ptr;
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
   /* At this point, we know that either n < sizeof (longword), or one of the
      sizeof (longword) bytes starting at char_ptr is == c.  On little-endian

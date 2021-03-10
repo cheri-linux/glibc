@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <memcopy.h>
+#include <stdint.h>
 
 #undef memset
 
@@ -24,7 +25,7 @@ void *
 inhibit_loop_to_libcall
 memset (void *dstpp, int c, size_t len)
 {
-  long int dstp = (long int) dstpp;
+  uintptr_t dstp = (uintptr_t) dstpp;
 
   if (len >= 8)
     {

@@ -24,11 +24,12 @@
 
 #undef memcpy
 
+#ifndef __CHERI_PURE_CAPABILITY__
 void *
 memcpy (void *dstpp, const void *srcpp, size_t len)
 {
-  uintptr_t dstp = (uintptr_t) dstpp;
-  uintptr_t srcp = (uintptr_t) srcpp;
+  int long dstp = (int long) dstpp;
+  int long srcp = (int long) srcpp;
 
   /* Copy from the beginning to the end.  */
 
@@ -58,4 +59,49 @@ memcpy (void *dstpp, const void *srcpp, size_t len)
 
   return dstpp;
 }
+
+#else 
+#include <cheric.h>
+#include <cherireg.h>
+#define __CAP_SIZE (_RISCV_SZCAP/8)
+
+void *
+memcpy (void *dstpp, const void *srcpp, size_t len)
+{
+	unsigned char *d = dstpp;
+	const unsigned char *s = srcpp;
+	for (; (unsigned long)s % __CAP_SIZE && len; len--) *d++ = *s++;
+	if ((unsigned long)d % __CAP_SIZE == 0) {
+		// source and destination are aligned
+		for (; len >= __CAP_SIZE;  s += __CAP_SIZE, d += __CAP_SIZE, len -= __CAP_SIZE) {
+			*(void**)d = *(void**)s;
+			if (cheri_gettag(*(void**)s) && !cheri_gettag(*(void**)d))
+				__builtin_trap();
+		}
+	}
+	for (; len; len--) *d++ = *s++;
+
+  return dstpp;
+}
+
+void *memcpy_reverse(void *dstpp, const void *srcpp, size_t len)
+{
+	unsigned char *d = dstpp;
+	const unsigned char *s = srcpp;
+
+	for (d += len, s += len; (unsigned long)s % __CAP_SIZE && len; len--) *--d = *--s;
+	if ((unsigned long)d % __CAP_SIZE == 0) {
+		// source and destination are aligned
+		for (; len >= __CAP_SIZE;  len -= __CAP_SIZE) {
+			s -= __CAP_SIZE;
+			d -= __CAP_SIZE;
+			*(void**)d = *(void**)s;
+		}
+	}
+	for (; len; len--) *--d = *--s;
+	return dstpp;
+}
+
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 libc_hidden_builtin_def (memcpy)

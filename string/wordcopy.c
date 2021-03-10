@@ -21,6 +21,7 @@
 
 #include <stddef.h>
 #include <memcopy.h>
+#include <stdint.h>
 
 /* _wordcopy_fwd_aligned -- Copy block beginning at SRCP to
    block beginning at DSTP with LEN `op_t' words (not LEN bytes!).
