@@ -33,6 +33,9 @@ size_t
 STRLEN (const char *str)
 {
   const char *char_ptr;
+
+
+#ifndef __CHERI_PURE_CAPABILITY__
   const unsigned long int *longword_ptr;
   unsigned long int longword, himagic, lomagic;
 
@@ -105,5 +108,12 @@ STRLEN (const char *str)
 	    }
 	}
     }
+#else /* __CHERI_PURE_CAPABILITY__ */
+  // Optimization above might read beyond the pointer end, which is not allowed in CHERI
+  char_ptr = str;
+  for (; *char_ptr; char_ptr++);
+  return char_ptr - str;
+
+#endif /* __CHERI_PURE_CAPABILITY__ */
 }
 libc_hidden_builtin_def (strlen)
