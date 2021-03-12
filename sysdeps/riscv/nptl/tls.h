@@ -27,8 +27,19 @@
 # include <stdint.h>
 # include <dl-dtv.h>
 
+#ifndef __CHERI_PURE_CAPABILITY__
 register void *__thread_self asm ("tp");
+#else
+register void *__thread_self asm ("ctp");
+#endif
+#ifndef __CHERI_PURE_CAPABILITY__
 # define READ_THREAD_POINTER() ({ __thread_self; })
+#else
+# define READ_THREAD_POINTER() \
+  ({ uintptr_t tp; __asm__ volatile ("cmove %0, ctp" \
+                       : "=C" (tp) \
+                       :); tp; })
+#endif
 
 /* Get system call information.  */
 # include <sysdep.h>
