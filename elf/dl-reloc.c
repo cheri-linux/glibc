@@ -29,6 +29,7 @@
 #include "dynamic-link.h"
 
 #include <cheric.h>
+#include <cheri_globals.h>
 
 /* Statistics function.  */
 #ifdef SHARED
@@ -205,6 +206,28 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 
   if (l->l_relocated)
     return;
+
+  #ifdef __CHERI_PURE_CAPABILITY__
+   __cheri_init_caps caps = {0};
+   uintptr_t capreloc_start = NULL;
+   size_t capreloc_size = 0;
+   ElfW(Dyn) *dyn = l->l_ld;
+
+   while (dyn->d_tag != DT_NULL) {
+     if (dyn->d_tag == DT_RISCV_CHERI___CAPRELOCS) {
+       capreloc_start = dyn->d_un.d_ptr;
+     } else if (dyn->d_tag == DT_RISCV_CHERI___CAPRELOCSSZ) {
+       capreloc_size = dyn->d_un.d_val;
+     }
+     ++dyn;
+    }
+   if (capreloc_start && capreloc_size) {
+     caps.base = l->l_addr;
+     caps.start_cap_relocs = (struct capreloc *) CHERI_CAST(capreloc_start + caps.base, capreloc_size);
+     caps.stop_cap_relocs = (void *)caps.start_cap_relocs + capreloc_size;
+     __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
+   }
+  #endif
 
   /* If DT_BIND_NOW is set relocate all references in this object.  We
      do not do this if we are profiling, of course.  */

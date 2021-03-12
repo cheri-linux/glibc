@@ -1935,6 +1935,14 @@ typedef struct
 #define DT_MIPS_RLD_MAP_REL  0x70000035
 #define DT_MIPS_NUM	     0x36
 
+#define DT_RISCV_CHERI___CAPRELOCS		0x7000c000 /* start of __cap_relocs section */
+#define DT_RISCV_CHERI___CAPRELOCSSZ		0x7000c001 /* size of __cap_relocs section */
+#define DT_RISCV_CHERI_FLAGS			0x7000c002 /* various CHERI flags (e.g. ABI) */
+#define DT_RISCV_CHERI_CAPTABLE			0x7000c003 /* start of .captable */
+#define DT_RISCV_CHERI_CAPTABLESZ		0x7000c004 /* size of .captable */
+#define DT_RISCV_CHERI_CAPTABLE_MAPPING		0x7000c005 /* start of .captable_mapping */
+#define DT_RISCV_CHERI_CAPTABLE_MAPPINGSZ	0x7000c006 /* size of .captable_mapping *
+
 /* Legal values for DT_MIPS_FLAGS Elf32_Dyn entry.  */
 
 #define RHF_NONE		   0		/* No flags */

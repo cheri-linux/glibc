@@ -519,7 +519,9 @@ _dl_start (void *arg)
   /* This should be the right place to init globals for cheri if we 
      want to get rid of the bootstrap map, i.e. set DONT_USE_BOOTSTRAP_MAP
 	 TODO: Bound caps similar to __cheri_init_globals */
-  __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),l_addr);
+  __cheri_init_caps caps = {0};
+  caps.base = l_addr;
+  __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
 #endif
 
   /* Figure out the run-time load address of the dynamic linker itself.  */

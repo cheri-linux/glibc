@@ -69,13 +69,18 @@ typedef struct {
 
 static __always_inline void
 __cheri_init_globals_3(void *data_cap, const void *code_cap,
-                     const void *rodata_cap, size_t base) { //__cheri_init_caps *caps) {
+                     const void *rodata_cap, //size_t base) { //__cheri_init_caps *caps) {
+						 __cheri_init_caps *caps) {
 	struct capreloc *start_relocs;
 	struct capreloc *stop_relocs;
 //#ifdef DYNLINK
 //	start_relocs = caps->start_cap_relocs;
 //	stop_relocs = caps->stop_cap_relocs;
 //#else
+if (caps->start_cap_relocs) {
+	start_relocs = caps->start_cap_relocs;
+	stop_relocs = caps->stop_cap_relocs;
+} else { // rtld case
 #ifndef __CHERI_CAPABILITY_TABLE__
 
 	/* If we are not using the CHERI capability table we can just synthesize
@@ -102,6 +107,7 @@ __cheri_init_globals_3(void *data_cap, const void *code_cap,
 	stop_relocs =
 		(struct capreloc *)((__UINTPTR_TYPE__)start_relocs + relocs_size);
 #endif
+}
 //#endif
 
 #if !defined(__CHERI_CAPABILITY_TABLE__)
@@ -117,7 +123,7 @@ __cheri_init_globals_3(void *data_cap, const void *code_cap,
 	 * location of the capreloc.
 	 */
 	cheri_init_globals_impl(start_relocs, stop_relocs, data_cap, code_cap,
-			rodata_cap, can_set_code_bounds, base);
+			rodata_cap, can_set_code_bounds, caps->base);
 }
 
 /* This is __always_inline since it is called before globals have been set up */
