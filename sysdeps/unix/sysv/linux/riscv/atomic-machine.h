@@ -27,6 +27,11 @@ typedef uint32_t uatomic32_t;
 typedef int64_t atomic64_t;
 typedef uint64_t uatomic64_t;
 
+#ifdef __CHERI_PURE_CAPABILITY__
+typedef intptr_t atomic128_t;
+typedef uintptr_t uatomic128_t;
+#endif
+
 typedef intptr_t atomicptr_t;
 typedef uintptr_t uatomicptr_t;
 typedef intmax_t atomic_max_t;
@@ -71,6 +76,13 @@ typedef uintmax_t uatomic_max_t;
 				  model, __ATOMIC_RELAXED);		\
   })
 
+#  define __arch_compare_and_exchange_bool_128_int(mem, newval, oldval, model) \
+  ({									\
+    typeof (*mem) __oldval = (oldval);					\
+    !__atomic_compare_exchange_n (mem, (void *) &__oldval, newval, 0,	\
+				  model, __ATOMIC_RELAXED);		\
+  })
+
 # define __arch_compare_and_exchange_val_8_int(mem, newval, oldval, model) \
   ({									\
     typeof (*mem) __oldval = (oldval);					\
@@ -96,6 +108,14 @@ typedef uintmax_t uatomic_max_t;
   })
 
 # define __arch_compare_and_exchange_val_64_int(mem, newval, oldval, model) \
+  ({									\
+    typeof (*mem) __oldval = (oldval);					\
+    __atomic_compare_exchange_n (mem, (void *) &__oldval, newval, 0,	\
+				 model, __ATOMIC_RELAXED);		\
+    __oldval;								\
+  })
+
+# define __arch_compare_and_exchange_val_128_int(mem, newval, oldval, model) \
   ({									\
     typeof (*mem) __oldval = (oldval);					\
     __atomic_compare_exchange_n (mem, (void *) &__oldval, newval, 0,	\
@@ -131,6 +151,9 @@ typedef uintmax_t uatomic_max_t;
 #  define __arch_exchange_64_int(mem, newval, model)	\
   __atomic_exchange_n (mem, newval, model)
 
+#  define __arch_exchange_128_int(mem, newval, model)	\
+  __atomic_exchange_n (mem, newval, model)
+
 # define atomic_exchange_acq(mem, value)				\
   __atomic_val_bysize (__arch_exchange, int, mem, value, __ATOMIC_ACQUIRE)
 
@@ -151,6 +174,9 @@ typedef uintmax_t uatomic_max_t;
 #  define __arch_exchange_and_add_64_int(mem, value, model)	\
   __atomic_fetch_add (mem, value, model)
 
+#  define __arch_exchange_and_add_128_int(mem, value, model)	\
+  __atomic_fetch_add (mem, value, model)
+
 # define atomic_exchange_and_add_acq(mem, value)			\
   __atomic_val_bysize (__arch_exchange_and_add, int, mem, value,	\
 		       __ATOMIC_ACQUIRE)
@@ -161,6 +187,7 @@ typedef uintmax_t uatomic_max_t;
 
 /* Miscellaneous.  */
 
+#ifndef __CHERI_PURE_CAPABILITY__
 # define asm_amo(which, ordering, mem, value) ({ 		\
   __atomic_check_size (mem);					\
   typeof (*mem) __tmp; 						\
@@ -176,7 +203,6 @@ typedef uintmax_t uatomic_max_t;
     abort ();							\
   __tmp; })
 
-#ifndef __CHERI_PURE_CAPABILITY__
 # define atomic_max(mem, value) asm_amo ("amomaxu", ".aq", mem, value)
 # define atomic_min(mem, value) asm_amo ("amominu", ".aq", mem, value)
 
@@ -185,6 +211,26 @@ typedef uintmax_t uatomic_max_t;
      asm_amo ("amoor", ".aq", mem, __mask) & __mask; })
 
 #else /* __CHERI_PURE_CAPABILITY__ */
+
+# define asm_amo(which, ordering, mem, value) ({ 		\
+  __atomic_check_size (mem);					\
+  typeof (*mem) __tmp; 						\
+  if (sizeof (__tmp) == 4)					\
+    asm volatile (which ".w" ordering "\t%0, %z2, %1"		\
+		  : "=r" (__tmp), "+A" (* (mem))		\
+		  : "rJ" (value));				\
+  else if (sizeof (__tmp) == 8)					\
+    asm volatile (which ".d" ordering "\t%0, %z2, %1"		\
+		  : "=r" (__tmp), "+A" (* (mem))		\
+		  : "rJ" (value));				\
+  else if (sizeof (__tmp) == 16)					\
+    asm volatile (which ".q" ordering "\t%0, %z2, %1"		\
+		  : "=C" (__tmp), "+A" (* (mem))		\
+		  : "rJ" (value));				\
+  else								\
+    abort ();							\
+  __tmp; })
+
 
 # define atomic_max(mem, value) asm_amo ("camomaxu", ".aq", mem, value)
 # define atomic_min(mem, value) asm_amo ("camominu", ".aq", mem, value)

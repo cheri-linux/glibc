@@ -52,6 +52,7 @@
 /* Wrapper macros to call pre_NN_post (mem, ...) where NN is the
    bit width of *MEM.  The calling macro puts parens around MEM
    and following args.  */
+   #ifndef __CHERI_PURE_CAPABILITY__
 #define __atomic_val_bysize(pre, post, mem, ...)			      \
   ({									      \
     __typeof ((__typeof (*(mem))) *(mem)) __atg1_result;		      \
@@ -82,6 +83,42 @@
       abort ();								      \
     __atg2_result;							      \
   })
+   #else /* __CHERI_PURE_CAPABILITY__ */
+#define __atomic_val_bysize(pre, post, mem, ...)			      \
+  ({									      \
+    __typeof ((__typeof (*(mem))) *(mem)) __atg1_result;		      \
+    if (sizeof (*mem) == 1)						      \
+      __atg1_result = pre##_8_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 2)					      \
+      __atg1_result = pre##_16_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 4)					      \
+      __atg1_result = pre##_32_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 8)					      \
+      __atg1_result = pre##_64_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 16)					      \
+      __atg1_result = pre##_128_##post (mem, __VA_ARGS__);		      \
+    else								      \
+      abort ();								      \
+    __atg1_result;							      \
+  })
+#define __atomic_bool_bysize(pre, post, mem, ...)			      \
+  ({									      \
+    int __atg2_result;							      \
+    if (sizeof (*mem) == 1)						      \
+      __atg2_result = pre##_8_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 2)					      \
+      __atg2_result = pre##_16_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 4)					      \
+      __atg2_result = pre##_32_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 8)					      \
+      __atg2_result = pre##_64_##post (mem, __VA_ARGS__);		      \
+    else if (sizeof (*mem) == 16)					      \
+      __atg2_result = pre##_128_##post (mem, __VA_ARGS__);		      \
+    else								      \
+      abort ();								      \
+    __atg2_result;							      \
+  })
+   #endif /* __CHERI_PURE_CAPABILITY__ */
 
 
 /* Atomically store NEWVAL in *MEM if *MEM is equal to OLDVAL.
