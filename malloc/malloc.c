@@ -2486,7 +2486,7 @@ sysmalloc (INTERNAL_SIZE_T nb, mstate av)
 
       if (size > 0)
         {
-          brk = (char *) (MORECORE (size));
+          brk = (char *) CHERI_CAST((MORECORE (size)), size);
           LIBC_PROBE (memory_sbrk_more, 2, brk, size);
         }
 
