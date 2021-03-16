@@ -1941,7 +1941,7 @@ typedef struct
 #define DT_RISCV_CHERI_CAPTABLE			0x7000c003 /* start of .captable */
 #define DT_RISCV_CHERI_CAPTABLESZ		0x7000c004 /* size of .captable */
 #define DT_RISCV_CHERI_CAPTABLE_MAPPING		0x7000c005 /* start of .captable_mapping */
-#define DT_RISCV_CHERI_CAPTABLE_MAPPINGSZ	0x7000c006 /* size of .captable_mapping *
+#define DT_RISCV_CHERI_CAPTABLE_MAPPINGSZ	0x7000c006 /* size of .captable_mapping */
 
 /* Legal values for DT_MIPS_FLAGS Elf32_Dyn entry.  */
 
