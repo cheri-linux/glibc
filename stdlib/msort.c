@@ -95,6 +95,8 @@ msort_with_tmp (const struct msort_param *p, void *b, size_t n)
 	  tmp += sizeof (uint64_t);
 	}
       break;
+    /* Optimization in variant 2 is not Cheri-compatible */
+	#ifndef __CHERI_PURE_CAPABILITY__
     case 2:
       while (n1 > 0 && n2 > 0)
 	{
@@ -118,6 +120,7 @@ msort_with_tmp (const struct msort_param *p, void *b, size_t n)
 	    *tmpl++ = *bl++;
 	}
       break;
+	#endif /* __CHERI_PURE_CAPABILITY__ */
     case 3:
       while (n1 > 0 && n2 > 0)
 	{
