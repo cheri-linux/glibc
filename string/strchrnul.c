@@ -44,11 +44,19 @@ STRCHRNUL (const char *s, int c_in)
 
   /* Handle the first few characters by reading one character at a time.
      Do this until CHAR_PTR is aligned on a longword boundary.  */
+  #ifndef __CHERI_PURE_CAPABILITY__
   for (char_ptr = (const unsigned char *) s;
        ((unsigned long int) char_ptr & (sizeof (longword) - 1)) != 0;
        ++char_ptr)
     if (*char_ptr == c || *char_ptr == '\0')
       return (void *) char_ptr;
+  #else /* __CHERI_PURE_CAPABILITY__ */
+  /* Optimization is not compatible with Cheri, since Cheri prevents 
+     those kinds of buffer overflows. Hence, use this unoptimized loop instead */
+  for (char_ptr = (const unsigned char *) s; ; ++char_ptr)
+    if (*char_ptr == c || *char_ptr == '\0')
+      return (void *) char_ptr;
+  #endif /* __CHERI_PURE_CAPABILITY__ */
 
   /* All these elucidatory comments refer to 4-byte longwords,
      but the theory applies equally well to 8-byte longwords.  */
