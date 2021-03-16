@@ -558,8 +558,20 @@
 
 
 #ifndef atomic_forced_read
+#ifndef __CHERI_PURE_CAPABILITY__
 # define atomic_forced_read(x) \
-  ({ __typeof (x) __x; __asm ("" : "=A" (__x) : "0" (x)); __x; })
+  ({ __typeof (x) __x; __asm ("" : "=r" (__x) : "0" (x)); __x; })
+#else /* __CHERI_PURE_CAPABILITY__ */
+# define atomic_forced_read(x) \
+  ({  \
+    __typeof (x) __x;  \
+    if (sizeof(__x) == 16) \
+      __asm ("" : "=C" (__x) : "0" (x)); \
+    else \
+      __asm ("" : "=r" (__x) : "0" (x)); \
+    __x; \
+  })
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #endif
 
 /* This is equal to 1 iff the architecture supports 64b atomic operations.  */
