@@ -90,23 +90,20 @@ __extension__
 typedef unsigned long long int	uint_fast64_t;
 #endif
 
-
+#ifdef __CHERI_PURE_CAPABILITY__
+# ifndef __intptr_t_defined
+typedef __intcap_t	intptr_t;
+#  define __intptr_t_defined
+# endif
+typedef __uintcap_t	uintptr_t;
+#else
 /* Types for `void *' pointers.  */
 #if __WORDSIZE == 64
 # ifndef __intptr_t_defined
-#ifdef __CHERI_PURE_CAPABILITY__
-typedef __intcap_t	intptr_t;
-#else
 typedef long int		intptr_t;
-#endif
 #  define __intptr_t_defined
 # endif
-
-#ifdef __CHERI_PURE_CAPABILITY__
-typedef __uintcap_t	uintptr_t;
-#else
 typedef unsigned long int	uintptr_t;
-#endif
 #else
 # ifndef __intptr_t_defined
 typedef int			intptr_t;
@@ -114,6 +111,7 @@ typedef int			intptr_t;
 # endif
 typedef unsigned int		uintptr_t;
 #endif
+#endif /* __CHERI_PURE_CAPABILITY__ */
 
 
 /* Largest integral types.  */

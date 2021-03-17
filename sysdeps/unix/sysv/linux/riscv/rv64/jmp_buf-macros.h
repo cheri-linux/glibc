@@ -34,6 +34,7 @@
        printf ("#define SAVED_MASK_OFFSET %d\n", offsetof (struct __jmp_buf_tag, __saved_mask));
    } */
 
+#ifndef __CHERI_PURE_CAPABILITY__
 #if defined __riscv_float_abi_soft
 # define JMP_BUF_SIZE 248
 # define JMP_BUF_ALIGN 8
@@ -51,3 +52,16 @@
 #else
 # error "Unknown RISC-V floating-point ABI"
 #endif
+#else /* __CHERI_PURE_CAPABILITY__ */
+/* TODO: Define for soft float ABI, if necessary */
+#if defined __riscv_float_abi_double
+# define JMP_BUF_SIZE 464
+# define JMP_BUF_ALIGN 16
+# define SIGJMP_BUF_SIZE 464
+# define SIGJMP_BUF_ALIGN 16
+# define MASK_WAS_SAVED_OFFSET 320
+# define SAVED_MASK_OFFSET 328
+#else
+# error "Unknown RISC-V floating-point ABI"
+#endif
+#endif /* __CHERI_PURE_CAPABILITY__ */

@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <sched.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
 #include <hp-timing.h>
@@ -36,7 +37,7 @@
 #include <kernel-features.h>
 
 #ifndef TCB_ALIGNMENT
-# define TCB_ALIGNMENT	sizeof (double)
+# define TCB_ALIGNMENT	sizeof (intptr_t)
 #endif
 
 

@@ -19,14 +19,16 @@
 #ifndef _RISCV_BITS_SETJMP_H
 #define _RISCV_BITS_SETJMP_H
 
+#include <stdint.h>
+
 typedef struct __jmp_buf_internal_tag
   {
     /* Program counter.  */
-    long int __pc;
+    intptr_t __pc;
     /* Callee-saved registers.  */
-    long int __regs[12];
+    intptr_t __regs[12];
     /* Stack pointer.  */
-    long int __sp;
+    intptr_t __sp;
 
     /* Callee-saved floating point registers.  */
 #if defined __riscv_float_abi_double
