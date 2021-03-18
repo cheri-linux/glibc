@@ -177,7 +177,8 @@ elf_machine_load_address (void)
 	# Save back the modified argument count.\n\
 	" STRINGXP (REG_S) " a1, 0(csp)\n\
 	# Call _dl_init (struct link_map *main_map, int argc, char **argv, char **env) \n\
-	clgc ca0, _rtld_local\n\
+	cllc ca0, _rtld_local\n\
+	clc ca0, (ca0)\n\
 	cincoffset ca2, csp, " STRINGXP (SZCREG) "\n\
 	sll a3, a1, " STRINGXP (PTRLOG) "\n\
 	cincoffset ca3, ca2, a3\n\
