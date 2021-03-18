@@ -64,12 +64,15 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
     {
       unsigned int j;
       unsigned int jm;
-      ElfW(Addr) *addrs;
+      init_t *addrs;
 
-      jm = l->l_info[DT_INIT_ARRAYSZ]->d_un.d_val / sizeof (ElfW(Addr));
-      addrs = (ElfW(Addr) *) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
+      /* Cheri note: Unexpectedly, the DT_INIT_ARRAY contains caps and not simple addresses */
+      jm = l->l_info[DT_INIT_ARRAYSZ]->d_un.d_val / sizeof (init_t *);
+      addrs = (init_t *) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
+      //addrs = (init_t) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
       for (j = 0; j < jm; ++j)
-        ((init_t) CHERI_CAST(addrs[j], -1)) (argc, argv, env);
+        //((init_t) CHERI_CAST(addrs[j], -1)) (argc, argv, env);
+        (addrs[j]) (argc, argv, env);
     }
 }
 
@@ -88,6 +91,8 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
     }
 
   /* Don't do anything if there is no preinit array.  */
+  /* TODO cheri make sure that preinit array does not contain caps already, 
+   as does DT_INIT_ARRAY. (does not seem like it)*/
   if (__builtin_expect (preinit_array != NULL, 0)
       && preinit_array_size != NULL
       && (i = preinit_array_size->d_un.d_val / sizeof (ElfW(Addr))) > 0)
