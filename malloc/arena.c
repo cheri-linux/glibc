@@ -473,8 +473,7 @@ new_heap (size_t size, size_t top_pad)
   p2 = MAP_FAILED;
   if (aligned_heap_area)
     {
-      p2 = (char *) CHERI_CAST (MMAP (aligned_heap_area, HEAP_MAX_SIZE, PROT_NONE,
-                          MAP_NORESERVE), HEAP_MAX_SIZE);
+      p2 = (char *) MMAP (aligned_heap_area, HEAP_MAX_SIZE, PROT_NONE, MAP_NORESERVE);
       aligned_heap_area = NULL;
       if (p2 != MAP_FAILED && ((uintptr_t) p2 & (HEAP_MAX_SIZE - 1)))
         {
@@ -484,7 +483,7 @@ new_heap (size_t size, size_t top_pad)
     }
   if (p2 == MAP_FAILED)
     {
-      p1 = (char *) CHERI_CAST (MMAP (0, HEAP_MAX_SIZE << 1, PROT_NONE, MAP_NORESERVE), HEAP_MAX_SIZE<<1);
+      p1 = (char *) MMAP (0, HEAP_MAX_SIZE << 1, PROT_NONE, MAP_NORESERVE);
       if (p1 != MAP_FAILED)
         {
           p2 = (char *) (((uintptr_t) p1 + (HEAP_MAX_SIZE - 1))
@@ -500,7 +499,7 @@ new_heap (size_t size, size_t top_pad)
         {
           /* Try to take the chance that an allocation of only HEAP_MAX_SIZE
              is already aligned. */
-          p2 = (char *) CHERI_CAST (MMAP (0, HEAP_MAX_SIZE, PROT_NONE, MAP_NORESERVE), HEAP_MAX_SIZE);
+          p2 = (char *) MMAP (0, HEAP_MAX_SIZE, PROT_NONE, MAP_NORESERVE);
           if (p2 == MAP_FAILED)
             return 0;
 
