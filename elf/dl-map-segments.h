@@ -107,10 +107,12 @@ _dl_map_segments (struct link_map *l, int fd,
         {
           /* Extra zero pages should appear at the end of this segment,
              after the data mapped from the file.   */
-          ElfW(Addr) zero, zeroend, zeropage;
+          //ElfW(Addr) zero, zeroend, zeropage;
+          uintptr_t zero, zeroend, zeropage;
 
-          zero = l->l_addr + c->dataend;
-          zeroend = l->l_addr + c->allocend;
+          /* TODO cheri set bounds */
+          zero = CHERI_CAST(l->l_addr + c->dataend, -1);
+          zeroend = CHERI_CAST(l->l_addr + c->allocend, -1);
           zeropage = ((zero + GLRO(dl_pagesize) - 1)
                       & ~(GLRO(dl_pagesize) - 1));
 
@@ -125,14 +127,13 @@ _dl_map_segments (struct link_map *l, int fd,
               if (__glibc_unlikely ((c->prot & PROT_WRITE) == 0))
                 {
                   /* Dag nab it.  */
-                  if (__mprotect ((caddr_t) (CHERI_CAST(zero
-                                             & ~(GLRO(dl_pagesize) - 1), -1)),
+                  if (__mprotect (zero & ~(GLRO(dl_pagesize) - 1),
                                   GLRO(dl_pagesize), c->prot|PROT_WRITE) < 0)
                     return DL_MAP_SEGMENTS_ERROR_MPROTECT;
                 }
-              memset ((void *) CHERI_CAST(zero, -1), '\0', zeropage - zero);
+              memset (zero, '\0', zeropage - zero);
               if (__glibc_unlikely ((c->prot & PROT_WRITE) == 0))
-                __mprotect ((caddr_t) (CHERI_CAST(zero & ~(GLRO(dl_pagesize) - 1), -1)),
+                __mprotect (zero & ~(GLRO(dl_pagesize) - 1),
                             GLRO(dl_pagesize), c->prot);
             }
 
@@ -140,7 +141,7 @@ _dl_map_segments (struct link_map *l, int fd,
             {
               /* Map the remaining zero pages in from the zero fill FD.  */
               caddr_t mapat;
-              mapat = __mmap ((caddr_t) CHERI_CAST(zeropage, -1), zeroend - zeropage,
+              mapat = __mmap (zeropage, zeroend - zeropage,
                               c->prot, MAP_ANON|MAP_PRIVATE|MAP_FIXED,
                               -1, 0);
               if (__glibc_unlikely (mapat == MAP_FAILED))
