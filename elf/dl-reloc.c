@@ -391,7 +391,7 @@ _dl_protect_relro (struct link_map *l)
 			       + l->l_relro_size),
 			      GLRO(dl_pagesize));
   if (start != end
-      && __mprotect ((void *) CHERI_CAST(start, -1), end - start, PROT_READ) < 0)
+      && __mprotect ((void *) CHERI_CAST(start, end-start), end - start, PROT_READ) < 0)
     {
       static const char errstring[] = N_("\
 cannot apply additional memory protection after relocation");
