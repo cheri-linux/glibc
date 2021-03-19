@@ -23,6 +23,8 @@
 #include <sysdep.h>
 #include <mmap_internal.h>
 
+#include <cheric.h>
+
 #ifdef __NR_mmap2
 /* To avoid silent truncation of offset when using mmap2, do not accept
    offset larger than 1 << (page_shift + off_t bits).  For archictures with
@@ -53,10 +55,10 @@ __mmap64 (void *addr, size_t len, int prot, int flags, int fd, off64_t offset)
 
   MMAP_PREPARE (addr, len, prot, flags, fd, offset);
 #ifdef __NR_mmap2
-  return (void *) MMAP_CALL (mmap2, addr, len, prot, flags, fd,
-			     (off_t) (offset / MMAP2_PAGE_UNIT));
+  return (void *) CHERI_CAST(MMAP_CALL (mmap2, addr, len, prot, flags, fd,
+			     (off_t) (offset / MMAP2_PAGE_UNIT)), len);
 #else
-  return (void *) MMAP_CALL (mmap, addr, len, prot, flags, fd, offset);
+  return (void *) CHERI_CAST(MMAP_CALL (mmap, addr, len, prot, flags, fd, offset), len);
 #endif
 }
 weak_alias (__mmap64, mmap64)

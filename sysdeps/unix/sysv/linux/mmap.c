@@ -22,6 +22,8 @@
 #include <sysdep.h>
 #include <stdint.h>
 
+#include <cheric.h>
+
 #ifndef __OFF_T_MATCHES_OFF64_T
 # include <mmap_internal.h>
 
@@ -39,11 +41,11 @@ __mmap (void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     return (void *) INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
 
 #ifdef __NR_mmap2
-  return (void *) MMAP_CALL (mmap2, addr, len, prot, flags, fd,
-			     offset / (uint32_t) MMAP2_PAGE_UNIT);
+  return (void *) CHERI_CAST(MMAP_CALL (mmap2, addr, len, prot, flags, fd,
+			     offset / (uint32_t) MMAP2_PAGE_UNIT), len);
 #else
-  return (void *) MMAP_CALL (mmap, addr, len, prot, flags, fd,
-			     MMAP_ADJUST_OFFSET (offset));
+  return (void *) CHERI_CAST(MMAP_CALL (mmap, addr, len, prot, flags, fd,
+			     MMAP_ADJUST_OFFSET (offset)), len);
 #endif
 }
 weak_alias (__mmap, mmap)
