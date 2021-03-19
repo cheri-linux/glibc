@@ -100,15 +100,15 @@ ENTRY (_dl_runtime_resolve)
 #else /* __CHERI_PURE_CAPABILITY__ */
   # Save arguments to stack.
   cincoffset csp, csp, -FRAME_SIZE
-  CREG_S cra, 9*SZREG(csp)
-  CREG_S ca0, 1*SZREG(csp)
-  CREG_S ca1, 2*SZREG(csp)
-  CREG_S ca2, 3*SZREG(csp)
-  CREG_S ca3, 4*SZREG(csp)
-  CREG_S ca4, 5*SZREG(csp)
-  CREG_S ca5, 6*SZREG(csp)
-  CREG_S ca6, 7*SZREG(csp)
-  CREG_S ca7, 8*SZREG(csp)
+  CREG_S cra, 9*SZCREG(csp)
+  CREG_S ca0, 1*SZCREG(csp)
+  CREG_S ca1, 2*SZCREG(csp)
+  CREG_S ca2, 3*SZCREG(csp)
+  CREG_S ca3, 4*SZCREG(csp)
+  CREG_S ca4, 5*SZCREG(csp)
+  CREG_S ca5, 6*SZCREG(csp)
+  CREG_S ca6, 7*SZCREG(csp)
+  CREG_S ca7, 8*SZCREG(csp)
 
 #ifndef __riscv_float_abi_soft
   FREG_S fa0, (10*SZCREG + 0*SZFREG)(csp)
