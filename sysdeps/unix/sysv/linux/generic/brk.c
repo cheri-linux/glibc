@@ -20,6 +20,11 @@
 #include <unistd.h>
 #include <sysdep.h>
 
+#ifdef __CHERI_PURE_CAPABILITY__
+#include <cheric.h>
+void *__brkstart = NULL;
+#endif
+
 /* This must be initialized data because commons can't have aliases.  */
 void *__curbrk = 0;
 
@@ -33,12 +38,22 @@ __brk (void *addr)
 {
   INTERNAL_SYSCALL_DECL (err);
 
-  __curbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
-  if (__curbrk < addr)
+  void *tmpbrk = NULL;
+
+  tmpbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
+  if (tmpbrk < addr)
     {
       __set_errno (ENOMEM);
       return -1;
     }
+
+  #ifdef __CHERI_PURE_CAPABILITY__
+  if (__curbrk == NULL)
+    __brkstart = tmpbrk;
+  __curbrk = CHERI_CAST (tmpbrk, tmpbrk - __brkstart);
+  #else
+  __curbrk = tmpbrk;
+  #endif
 
   return 0;
 }
