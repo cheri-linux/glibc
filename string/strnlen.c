@@ -40,6 +40,16 @@ __strnlen (const char *str, size_t maxlen)
   if (maxlen == 0)
     return 0;
 
+  #ifdef __CHERI_PURE_CAPABILITY__
+  /* glibc's optimized strnlen version is not compatible with Cheri since it
+   * intentionally overflows the str buffer */
+  const char *p = str;
+
+	while (maxlen-- > 0 && *p)
+		p++;
+	return p - str;
+  #endif
+
   if (__glibc_unlikely (end_ptr < str))
     end_ptr = (const char *) ~0UL;
 
