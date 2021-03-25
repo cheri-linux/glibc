@@ -3271,9 +3271,16 @@ build_trtable (const re_dfa_t *dfa, re_dfastate_t *state)
      from `state'.  `dests_node[i]' represents the nodes which i-th
      destination state contains, and `dests_ch[i]' represents the
      characters which i-th destination state accepts.  */
+  /* TODO cheri: the alloca in the if clause seems to trigger a weird bug in the
+   * cheri compiler. The compiler clobbers register s1 for setting the bounds on
+   * the capability from the alloca (csetbounds), but does not seem to remember
+   * doing so, since the register is afterwards used as if it still contained a
+   * stack-pointer. This leads to a cheri violation. */
+  #ifndef __CHERI_PURE_CAPABILITY__
   if (__libc_use_alloca (sizeof (struct dests_alloc)))
     dests_alloc = (struct dests_alloc *) alloca (sizeof (struct dests_alloc));
   else
+  #endif
     {
       dests_alloc = re_malloc (struct dests_alloc, 1);
       if (BE (dests_alloc == NULL, 0))
