@@ -130,13 +130,14 @@ _dl_fini (void)
 		      /* First see whether an array is given.  */
 		      if (l->l_info[DT_FINI_ARRAY] != NULL)
 			{
-			  ElfW(Addr) *array =
-			    (ElfW(Addr) *) (CHERI_CAST(l->l_addr
+			  fini_t *array =
+			    (fini_t *) (CHERI_CAST(l->l_addr
 					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr, -1));
+			  /* Cheri: Note that DT_FINI_ARRAY contains capabilities */
 			  unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
-					    / sizeof (ElfW(Addr)));
+					    / sizeof (fini_t *));
 			  while (i-- > 0)
-			    ((fini_t) CHERI_CAST(array[i], -1)) ();
+			    array[i] ();
 			}
 
 		      /* Next try the old-style destructor.  */
