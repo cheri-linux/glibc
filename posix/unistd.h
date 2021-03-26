@@ -23,6 +23,7 @@
 #define	_UNISTD_H	1
 
 #include <features.h>
+#include <stdint.h>
 
 __BEGIN_DECLS
 
@@ -1056,8 +1057,39 @@ extern void *sbrk (intptr_t __delta) __THROW;
 
    In Mach, all system calls take normal arguments and always return an
    error code (zero for success).  */
+#ifndef __CHERI_PURE_CAPABILITY__
 extern long int syscall (long int __sysno, ...) __THROW;
+#else
+#ifndef __scc
+# define __scc(a) ((intptr_t) (a))
+#endif
+#ifndef syscall_arg_t
+# define syscall_arg_t intptr_t
+#endif
 
+extern syscall_arg_t syscall (long int __sysno, syscall_arg_t arg1,
+			      syscall_arg_t arg2, syscall_arg_t arg3,
+			      syscall_arg_t arg4, syscall_arg_t arg5,
+			      syscall_arg_t arg6, syscall_arg_t arg7) __THROW;
+
+#define __SYSCALL_CHERI_NARGS_X(a,b,c,d,e,f,g,h,n,...) n
+#define __SYSCALL_CHERI_NARGS(...) __SYSCALL_CHERI_NARGS_X (__VA_ARGS__,7,6,5,4,3,2,1,0,)
+#define __SYSCALL_CHERI_CONCAT_X(a,b) a##b
+#define __SYSCALL_CHERI_CONCAT(a,b) __SYSCALL_CHERI_CONCAT_X (a, b)
+#define __SYSCALL_CHERI_DISP(b,...) __SYSCALL_CHERI_CONCAT (b,__SYSCALL_CHERI_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define __syscall_cheri0(n) (syscall) (n, 0, 0, 0, 0, 0, 0, 0)
+#define __syscall_cheri1(n,a) (syscall) (n, __scc(a), 0, 0, 0, 0, 0, 0)
+#define __syscall_cheri2(n,a,b) (syscall) (n, __scc(a), __scc(b), 0, 0, 0, 0, 0)
+#define __syscall_cheri3(n,a,b,c) (syscall) (n, __scc(a), __scc(b), __scc(c), 0, 0, 0, 0)
+#define __syscall_cheri4(n,a,b,c,d) (syscall) (n, __scc(a), __scc(b), __scc(c), __scc(d), 0, 0, 0)
+#define __syscall_cheri5(n,a,b,c,d,e) (syscall) (n, __scc(a), __scc(b), __scc(c), __scc(d), __scc(e), 0, 0)
+#define __syscall_cheri6(n,a,b,c,d,e,f) (syscall) (n, __scc(a), __scc(b), __scc(c), __scc(d), __scc(e), __scc(f), 0)
+#define __syscall_cheri7(n,a,b,c,d,e,f,g) (syscall) (n, __scc(a), __scc(b), __scc(c), __scc(d), __scc(e), __scc(f), __scc(g))
+
+#define syscall(...) __SYSCALL_CHERI_DISP (__syscall_cheri, __VA_ARGS__)
+
+#endif
 #endif	/* Use misc.  */
 
 

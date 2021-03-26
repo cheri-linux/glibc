@@ -29,10 +29,12 @@
 # define syscall_arg_t intptr_t
 # define _CREG "c"
 # define _C "C"
+# define __scc(x) ((intptr_t) (a))
 #else
 # define syscall_arg_t long int
 # define _CREG 
 # define _C "r"
+# define __scc(x) ((long int) (a))
 #endif
 
 #ifdef __ASSEMBLER__

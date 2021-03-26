@@ -18,19 +18,18 @@
 
 #include <sysdep.h>
 
-/* TODO Cheri: Adapt this file */
-
-long int
-syscall (long int syscall_number, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
-	 uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, uintptr_t arg7)
+syscall_arg_t
+syscall (long int syscall_number, syscall_arg_t arg1, syscall_arg_t arg2,
+	 syscall_arg_t arg3, syscall_arg_t arg4, syscall_arg_t arg5,
+	 syscall_arg_t arg6, syscall_arg_t arg7)
 {
-  long int ret;
+  syscall_arg_t ret;
   INTERNAL_SYSCALL_DECL (err);
 
   ret = INTERNAL_SYSCALL_NCS (syscall_number, err, 7, arg1, arg2, arg3, arg4,
 			      arg5, arg6, arg7);
 
-  if (INTERNAL_SYSCALL_ERROR_P (ret, err))
+  if (INTERNAL_SYSCALL_ERROR_P ((long int) ret, err))
     return __syscall_error (ret);
 
   return ret;
