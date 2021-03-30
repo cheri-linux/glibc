@@ -130,8 +130,24 @@ extern int mincore (void *__start, size_t __len, unsigned char *__vec)
    may differ from ADDR.  If MREMAP_FIXED is set in FLAGS the function
    takes another parameter which is a fixed address at which the block
    resides after a successful call.  */
+#if !defined(__CHERI_PURE_CAPABILITY__) || defined(__mremap_orig)
 extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
 		     int __flags, ...) __THROW;
+#else
+extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
+		     int __flags, void *__new_address) __THROW;
+
+#define __MREMAP_NARGS_X(a,b,c,d,e,f,...) f
+#define __MREMAP_NARGS(...) __MREMAP_NARGS_X (__VA_ARGS__,1,0,)
+#define __MREMAP_CONCAT_X(a,b) a##b
+#define __MREMAP_CONCAT(a,b) __MREMAP_CONCAT_X (a, b)
+#define __MREMAP_DISP(b,...) __MREMAP_CONCAT (b,__MREMAP_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define __mremap_cheri0(a,b,c,d) (mremap) (a, b, c, d, 0)
+#define __mremap_cheri1(a,b,c,d,e) (mremap) (a, b, c, d, e)
+
+#define mremap(...) __MREMAP_DISP (__mremap_cheri, __VA_ARGS__)
+#endif
 
 /* Remap arbitrary pages of a shared backing store within an existing
    VMA.  */

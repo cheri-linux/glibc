@@ -18,8 +18,18 @@ extern int __madvise (void *__addr, size_t __len, int __advice);
 libc_hidden_proto (__madvise)
 
 /* This one is Linux specific.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 extern void *__mremap (void *__addr, size_t __old_len,
 		       size_t __new_len, int __flags, ...);
+#else
+extern void *__mremap (void *__addr, size_t __old_len, size_t __new_len,
+		       int __flags, void *__new_address);
+
+#define ___mremap_cheri0(a,b,c,d) (__mremap) (a, b, c, d, 0)
+#define ___mremap_cheri1(a,b,c,d,e) (__mremap) (a, b, c, d, e)
+
+#define __mremap(...) __MREMAP_DISP (___mremap_cheri, __VA_ARGS__)
+#endif
 libc_hidden_proto (__mremap)
 
 # if IS_IN (rtld)

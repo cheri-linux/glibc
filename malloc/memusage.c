@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#define __mremap_orig
 #include <sys/mman.h>
 #include <sys/time.h>
 
