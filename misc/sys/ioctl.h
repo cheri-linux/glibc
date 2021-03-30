@@ -22,6 +22,8 @@
 
 __BEGIN_DECLS
 
+#include <stdint.h>
+
 /* Get the list of `ioctl' requests and related constants.  */
 #include <bits/ioctls.h>
 
@@ -38,7 +40,23 @@ __BEGIN_DECLS
 /* Perform the I/O control operation specified by REQUEST on FD.
    One argument may follow; its presence and type depend on REQUEST.
    Return value depends on REQUEST.  Usually -1 indicates error.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 extern int ioctl (int __fd, unsigned long int __request, ...) __THROW;
+#else
+extern int ioctl (int __fd, unsigned long int __request,
+		  void *__argp) __THROW;
+
+#define __IOCTL_NARGS_X(a,b,c,d,...) d
+#define __IOCTL_NARGS(...) __IOCTL_NARGS_X (__VA_ARGS__,1,0,)
+#define __IOCTL_CONCAT_X(a,b) a##b
+#define __IOCTL_CONCAT(a,b) __IOCTL_CONCAT_X (a, b)
+#define __IOCTL_DISP(b,...) __IOCTL_CONCAT (b,__IOCTL_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define __ioctl_cheri0(fd,request) (ioctl) (fd, request, 0)
+#define __ioctl_cheri1(fd,request,argp) (ioctl) (fd, request, argp)
+
+#define ioctl(...) __IOCTL_DISP (__ioctl_cheri, __VA_ARGS__)
+#endif
 
 __END_DECLS
 
