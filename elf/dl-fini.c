@@ -137,7 +137,18 @@ _dl_fini (void)
 			  unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
 					    / sizeof (fini_t *));
 			  while (i-- > 0)
+			  #ifndef __CHERI_PURE_CAPABILITY__
 			    array[i] ();
+			  #else
+				if (cheri_gettag(array[i]))
+				  {
+					array[i] ();
+				  }
+				else
+				  {
+					((fini_t) CHERI_CAST(array[i], -1)) ();
+				  }
+			  #endif
 			}
 
 		      /* Next try the old-style destructor.  */
