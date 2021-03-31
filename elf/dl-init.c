@@ -71,8 +71,18 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
       addrs = (init_t *) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
       //addrs = (init_t) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
       for (j = 0; j < jm; ++j)
-        //((init_t) CHERI_CAST(addrs[j], -1)) (argc, argv, env);
+        #ifndef __CHERI_PURE_CAPABILITY__
         (addrs[j]) (argc, argv, env);
+        #else
+        if (cheri_gettag(addrs[j]))
+          {
+            (addrs[j]) (argc, argv, env);
+          }
+        else
+          {
+            ((init_t) CHERI_CAST(addrs[j], -1)) (argc, argv, env);
+          }
+        #endif
     }
 }
 
