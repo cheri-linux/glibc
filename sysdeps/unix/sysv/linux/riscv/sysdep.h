@@ -23,18 +23,21 @@
 #include <tls.h>
 
 // CHERI: Define the following if the kernel receives/returns caps in its syscalls
+// Warning: Keep in sync with posix/unistd.h
 //#define SYSCALL_PURECAP
 
 #if defined(__CHERI_PURE_CAPABILITY__) && defined(SYSCALL_PURECAP)
-# define syscall_arg_t intptr_t
+# ifndef syscall_arg_t
+#  define syscall_arg_t intptr_t
+# endif
 # define _CREG "c"
 # define _C "C"
-# define __scc(x) ((intptr_t) (a))
 #else
-# define syscall_arg_t long int
+# ifndef syscall_arg_t
+#  define syscall_arg_t long int
+# endif
 # define _CREG 
 # define _C "r"
-# define __scc(x) ((long int) (a))
 #endif
 
 #ifdef __ASSEMBLER__

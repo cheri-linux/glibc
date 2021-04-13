@@ -1057,15 +1057,22 @@ extern void *sbrk (intptr_t __delta) __THROW;
 
    In Mach, all system calls take normal arguments and always return an
    error code (zero for success).  */
+// CHERI: Define the following if the kernel receives/returns caps in its syscalls
+// Warning: Keep in sync with sysdeps/unix/sysv/linux/riscv/sysdep.h
+//#define SYSCALL_PURECAP
+
 #ifndef __CHERI_PURE_CAPABILITY__
 extern long int syscall (long int __sysno, ...) __THROW;
 #else
-#ifndef __scc
-# define __scc(a) ((intptr_t) (a))
-#endif
 #ifndef syscall_arg_t
+#ifdef SYSCALL_PURECAP
 # define syscall_arg_t intptr_t
-#endif
+# define __scc(x) ((intptr_t) (a))
+#else
+# define syscall_arg_t long int
+# define __scc(x) ((long int) (a))
+#endif /* SYSCALL_PURECAP */
+#endif /* syscall_arg_t */
 
 extern syscall_arg_t syscall (long int __sysno, syscall_arg_t arg1,
 			      syscall_arg_t arg2, syscall_arg_t arg3,
