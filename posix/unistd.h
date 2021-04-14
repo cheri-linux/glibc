@@ -1067,10 +1067,10 @@ extern long int syscall (long int __sysno, ...) __THROW;
 #ifndef syscall_arg_t
 #ifdef SYSCALL_PURECAP
 # define syscall_arg_t intptr_t
-# define __scc(x) ((intptr_t) (a))
+# define __scc(x) ((intptr_t) (x))
 #else
 # define syscall_arg_t long int
-# define __scc(x) ((long int) (a))
+# define __scc(x) ((long int) (x))
 #endif /* SYSCALL_PURECAP */
 #endif /* syscall_arg_t */
 
