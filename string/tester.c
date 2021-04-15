@@ -33,6 +33,7 @@
 #include <strings.h>
 #include <fcntl.h>
 #include <libc-diag.h>
+#include <cheric.h>
 
 
 #define	STREQ(a, b)	(strcmp((a), (b)) == 0)
@@ -615,7 +616,7 @@ test_strlen (void)
     char *p;
     for (i=0; i < 0x100; i++)
       {
-	p = (char *) ((unsigned long int)(buf + 0xff) & ~0xff) + i;
+	p = (char *) ((uintptr_t) (buf  + 0xff) & ~0xff) + i;
 	strcpy (p, "OK");
 	strcpy (p+3, "BAD/WRONG");
 	check (strlen (p) == 2, 4+i);
@@ -640,7 +641,7 @@ test_strnlen (void)
   char buf[4096];
   for (int i = 0; i < 0x100; ++i)
     {
-      char *p = (char *) ((unsigned long int)(buf + 0xff) & ~0xff) + i;
+      char *p = (char *) ((uintptr_t) (buf + 0xff) & ~0xff) + i;
       strcpy (p, "OK");
       strcpy (p + 3, "BAD/WRONG");
       check (strnlen (p, 100) == 2, 10 + i);
@@ -668,7 +669,7 @@ test_strchr (void)
     char *p;
     for (i=0; i < 0x100; i++)
       {
-	p = (char *) ((unsigned long int) (buf + 0xff) & ~0xff) + i;
+	p = (char *) ((uintptr_t) (buf + 0xff) & ~0xff) + i;
 	strcpy (p, "OK");
 	strcpy (p+3, "BAD/WRONG");
 	check (strchr (p, '/') == NULL, 9+i);
@@ -700,7 +701,7 @@ test_strchrnul (void)
     char *p;
     for (i=0; i < 0x100; i++)
       {
-	p = (char *) ((unsigned long int) (buf + 0xff) & ~0xff) + i;
+	p = (char *) ((uintptr_t) (buf + 0xff) & ~0xff) + i;
 	strcpy (p, "OK");
 	strcpy (p+3, "BAD/WRONG");
 	cp = strchrnul (p, '/');
@@ -729,7 +730,7 @@ test_rawmemchr (void)
     char *p;
     for (i=0; i < 0x100; i++)
       {
-	p = (char *) ((unsigned long int) (buf + 0xff) & ~0xff) + i;
+	p = (char *) ((uintptr_t) (buf + 0xff) & ~0xff) + i;
 	strcpy (p, "OK");
 	strcpy (p+3, "BAD/WRONG");
 	check (rawmemchr (p, 'R') == p+8, 6+i);
@@ -775,7 +776,7 @@ test_strrchr (void)
     char *p;
     for (i=0; i < 0x100; i++)
       {
-	p = (char *) ((unsigned long int) (buf + 0xff) & ~0xff) + i;
+	p = (char *) ((uintptr_t) (buf + 0xff) & ~0xff) + i;
 	strcpy (p, "OK");
 	strcpy (p+3, "BAD/WRONG");
 	check (strrchr (p, '/') == NULL, 9+i);
