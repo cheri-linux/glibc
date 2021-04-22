@@ -105,14 +105,14 @@
 .Lsyscall_error ## name:					\
 	li t1, -4096;						\
 	neg a0, a0;						\
-1:	auipcc ct1, %pcrel_hi(rtld_errno);		\
+1:	auipcc ct1, %captab_pcrel_hi(rtld_errno);		\
 	csw a0, %pcrel_lo(1b)(ct1);					\
     li a0, -1;
 #  elif defined (__PIC__)
 #   define SYSCALL_ERROR_HANDLER(name)				\
 .Lsyscall_error ## name:					\
         /*la.tls.ie t1, errno;				*/\
-2:	auipcc ct1, %tls_ie_pcrel_hi(errno); \
+2:	auipcc ct1, %tls_ie_captab_pcrel_hi(errno); \
 	cld t1, %pcrel_lo(2b)(ct1);							\
 	cincoffset ct1, ctp, t1; 	 \
 	neg a0, a0;						\
@@ -120,10 +120,9 @@
         li a0, -1;
 #  else
 #   define SYSCALL_ERROR_HANDLER(name)				\
-/* TODO Cheri: Adapt this code snippet */ \
 .Lsyscall_error ## name:					\
         lui t1, %tprel_hi(errno);				\
-        add t1, t1, tp, %tprel_add(errno);			\
+	cincoffset ct1, ctp, t1, %tprel_cincoffset(errno); \
 	neg a0, a0;						\
         csw a0, %tprel_lo(errno)(ct1);				\
         li a0, -1;

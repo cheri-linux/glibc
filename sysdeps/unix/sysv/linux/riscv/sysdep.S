@@ -55,19 +55,17 @@ ENTRY (__syscall_set_errno)
 1:	jr t0
 #else // __CHERI_PURE_CAPABILITY__
 #if RTLD_PRIVATE_ERRNO
-	/* TODO Cheri: adapt this */
-3:	auipcc ct1, %pcrel_hi(errno)
+3:	auipcc ct1, %captab_pcrel_hi(errno)
 	csw a0, %pcrel_lo(3b)(ct1)
 #elif defined(__PIC__)
 	//la.tls.ie t1, errno
-	// no idea if that's working
-2:	auipcc ct1, %tls_ie_pcrel_hi(errno)
+2:	auipcc ct1, %tls_ie_captab_pcrel_hi(errno)
 	cld t1, %pcrel_lo(2b)(ct1)
-	cincoffset ct1, ctp, t1 //, %tprel_add(errno)
+	cincoffset ct1, ctp, t1
 	csw a0, 0(ct1)
 #else
 	lui t1, %tprel_hi(errno)
-	cincoffset ct1, ctp, t1 //, %tprel_add(errno)
+	cincoffset ct1, ctp, t1, %tprel_cincoffset(errno)
 	csw a0, %tprel_lo(errno)(ct1)
 #endif
 	li a0, -1
