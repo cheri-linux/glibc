@@ -29,7 +29,11 @@ typedef struct
 
 /* Dynamic thread vector pointers point 0x800 past the start of each
    TLS block.  */
-#define TLS_DTV_OFFSET		0x800
+#ifdef __CHERI_PURE_CAPABILITY__
+#define	TLS_DTV_OFFSET	0
+#else
+#define	TLS_DTV_OFFSET	0x800
+#endif
 
 /* Compute the value for a GOTTPREL reloc.  */
 #define TLS_TPREL_VALUE(sym_map, sym) \
