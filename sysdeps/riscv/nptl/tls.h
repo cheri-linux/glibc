@@ -128,6 +128,7 @@ typedef struct
 
 /* Informs libthread_db that the thread pointer is register 4, which is used
  * to know how to do THREAD_SELF.  */
+// TODO Cheri: adapt this
 # define DB_THREAD_SELF \
   REGISTER (64, 64, 4 * 8, - TLS_TCB_OFFSET - TLS_PRE_TCB_SIZE)
 

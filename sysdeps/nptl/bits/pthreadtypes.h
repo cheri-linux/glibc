@@ -26,7 +26,7 @@
 
 /* Thread identifiers.  The structure of the attribute type is not
    exposed on purpose.  */
-typedef unsigned long int pthread_t;
+typedef uintptr_t pthread_t;
 
 
 /* Data structures for mutex handling.  The structure of the attribute
