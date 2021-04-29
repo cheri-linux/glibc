@@ -146,7 +146,7 @@ _dl_fini (void)
 				  }
 				else
 				  {
-					((fini_t) CHERI_CAST(array[i], -1)) ();
+					((fini_t) CHERI_FN_CAST(array[i], -1)) ();
 				  }
 			  #endif
 			}
@@ -154,7 +154,7 @@ _dl_fini (void)
 		      /* Next try the old-style destructor.  */
 		      if (l->l_info[DT_FINI] != NULL)
 			DL_CALL_DT_FINI
-			  (l, CHERI_CAST(l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr, -1));
+			  (l, CHERI_FN_CAST(l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr, -1));
 		    }
 
 #ifdef SHARED

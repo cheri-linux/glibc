@@ -61,8 +61,10 @@ typedef	void * __capability	otype_t;
 
 #ifndef __CHERI_PURE_CAPABILITY__
 #define CHERI_CAST(ptr, len)	({ (ptr); })
+#define CHERI_FN_CAST(ptr, len)	({ (ptr); })
 #else
 #define CHERI_CAST(ptr, len)	({ cheri_long(ptr, len); })
+#define CHERI_FN_CAST(ptr, len) ({ cheri_codeptr_long(ptr, len); })
 #endif
 
 

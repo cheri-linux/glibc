@@ -286,12 +286,12 @@ _dl_close_worker (struct link_map *map, bool force)
 				     / sizeof (ElfW(Addr)));
 
 		  while (sz-- > 0)
-		    ((fini_t) CHERI_CAST(array[sz], -1)) ();
+		    ((fini_t) CHERI_FN_CAST(array[sz], -1)) ();
 		}
 
 	      /* Next try the old-style destructor.  */
 	      if (imap->l_info[DT_FINI] != NULL)
-		DL_CALL_DT_FINI (imap, ((void *) CHERI_CAST(imap->l_addr
+		DL_CALL_DT_FINI (imap, ((void *) CHERI_FN_CAST(imap->l_addr
 			 + imap->l_info[DT_FINI]->d_un.d_ptr, -1)));
 	    }
 

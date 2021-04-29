@@ -331,8 +331,14 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	  // sym_val_p ~> (sym_map->l_addr + sym->st_value) type: (void*) in musl
 	  // in musl: *(void**) reloc_addr = sym_val_p
 	  // TODO cheri: length of cap
-	  if (sym != NULL)
-		  *(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, -1);
+	  if (sym != NULL) {
+		  if (ELFW(ST_TYPE) (sym->st_info) == STT_FUNC) {
+			*(void**) addr_field =  (void*) CHERI_FN_CAST(sym_map->l_addr+ sym->st_value, -1);
+		  } else {
+			*(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, -1);
+		  }
+
+	  }
 	  break;
 #endif
     default:

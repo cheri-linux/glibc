@@ -75,7 +75,7 @@ typedef struct link_map *lookup_t;
    specific descriptor. */
 #ifndef ELF_FUNCTION_PTR_IS_SPECIAL
 # define DL_SYMBOL_ADDRESS(map, ref) \
- (void *) (CHERI_CAST(LOOKUP_VALUE_ADDRESS (map) + ref->st_value, -1)) 
+ (void *) ( (ELFW(ST_TYPE)(ref->st_info) == STT_FUNC) ? (CHERI_FN_CAST(LOOKUP_VALUE_ADDRESS (map) + ref->st_value, -1)) :(CHERI_CAST(LOOKUP_VALUE_ADDRESS (map) + ref->st_value, -1)) )
 # define DL_LOOKUP_ADDRESS(addr) ((ElfW(Addr)) (addr))
 # define DL_CALL_DT_INIT(map, start, argc, argv, env) \
  ((init_t) (start)) (argc, argv, env)

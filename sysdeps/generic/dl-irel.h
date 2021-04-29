@@ -25,7 +25,7 @@ static inline DL_FIXUP_VALUE_TYPE
 __attribute ((always_inline))
 elf_ifunc_invoke (ElfW(Addr) addr)
 {
-  return ((DL_FIXUP_VALUE_TYPE (*) (void)) (CHERI_CAST(addr, -1))) ();
+  return ((DL_FIXUP_VALUE_TYPE (*) (void)) (CHERI_FN_CAST(addr, -1))) ();
 }
 
 #endif /* dl-irel.h */

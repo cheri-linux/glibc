@@ -56,7 +56,7 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
      - the others in the DT_INIT_ARRAY.
   */
   if (l->l_info[DT_INIT] != NULL)
-    DL_CALL_DT_INIT(l, CHERI_CAST(l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr, -1), argc, argv, env);
+    DL_CALL_DT_INIT(l, CHERI_FN_CAST(l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr, -1), argc, argv, env);
 
   /* Next see whether there is an array with initialization functions.  */
   ElfW(Dyn) *init_array = l->l_info[DT_INIT_ARRAY];
@@ -80,7 +80,7 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
           }
         else
           {
-            ((init_t) CHERI_CAST(addrs[j], -1)) (argc, argv, env);
+            ((init_t) CHERI_FN_CAST(addrs[j], -1)) (argc, argv, env);
           }
         #endif
     }
@@ -116,7 +116,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
 
       addrs = (ElfW(Addr) *) (CHERI_CAST(preinit_array->d_un.d_ptr + main_map->l_addr, -1));
       for (cnt = 0; cnt < i; ++cnt)
-        ((init_t) CHERI_CAST(addrs[cnt], -1)) (argc, argv, env);
+        ((init_t) CHERI_FN_CAST(addrs[cnt], -1)) (argc, argv, env);
     }
 
   /* Stupid users forced the ELF specification to be changed.  It now
