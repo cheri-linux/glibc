@@ -25,8 +25,8 @@ extern void *__mremap (void *__addr, size_t __old_len,
 extern void *__mremap (void *__addr, size_t __old_len, size_t __new_len,
 		       int __flags, void *__new_address);
 
-#define ___mremap_cheri0(a,b,c,d) (__mremap) (a, b, c, d, 0)
-#define ___mremap_cheri1(a,b,c,d,e) (__mremap) (a, b, c, d, e)
+#define ___mremap_cheri0(a,b,c,d) __cheri_long((__mremap) (a, b, c, d, 0), c)
+#define ___mremap_cheri1(a,b,c,d,e) __cheri_long((__mremap) (a, b, c, d, e), c)
 
 #define __mremap(...) __MREMAP_DISP (___mremap_cheri, __VA_ARGS__)
 #endif

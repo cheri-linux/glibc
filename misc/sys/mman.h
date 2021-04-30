@@ -137,14 +137,16 @@ extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
 extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
 		     int __flags, void *__new_address) __THROW;
 
+#define __cheri_long(addr, len) __builtin_cheri_bounds_set(__builtin_cheri_address_set(__builtin_cheri_global_data_get(), (addr)), (len))
+
 #define __MREMAP_NARGS_X(a,b,c,d,e,f,...) f
 #define __MREMAP_NARGS(...) __MREMAP_NARGS_X (__VA_ARGS__,1,0,)
 #define __MREMAP_CONCAT_X(a,b) a##b
 #define __MREMAP_CONCAT(a,b) __MREMAP_CONCAT_X (a, b)
 #define __MREMAP_DISP(b,...) __MREMAP_CONCAT (b,__MREMAP_NARGS(__VA_ARGS__))(__VA_ARGS__)
 
-#define __mremap_cheri0(a,b,c,d) (mremap) (a, b, c, d, 0)
-#define __mremap_cheri1(a,b,c,d,e) (mremap) (a, b, c, d, e)
+#define __mremap_cheri0(a,b,c,d) __cheri_long((mremap) (a, b, c, d, 0), c)
+#define __mremap_cheri1(a,b,c,d,e) __cheri_long((mremap) (a, b, c, d, e), c)
 
 #define mremap(...) __MREMAP_DISP (__mremap_cheri, __VA_ARGS__)
 #endif
