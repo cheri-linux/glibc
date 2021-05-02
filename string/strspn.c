@@ -55,6 +55,7 @@ STRSPN (const char *str, const char *accept)
 
   s = (unsigned char*) str;
   if (!p[s[0]]) return 0;
+#ifndef __CHERI_PURE_CAPABILITY__
   if (!p[s[1]]) return 1;
   if (!p[s[2]]) return 2;
   if (!p[s[3]]) return 3;
@@ -72,5 +73,13 @@ STRSPN (const char *str, const char *accept)
 
   size_t count = s - (unsigned char *) str;
   return (c0 & c1) == 0 ? count + c0 : count + c2 + 2;
+#else /* __CHERI_PURE_CAPABILITY__ */
+  unsigned int c0;
+  do {
+      s++;
+      c0 = p[s[0]];
+  } while (c0 != 0);
+  return s - (unsigned char *) str;
+#endif
 }
 libc_hidden_builtin_def (strspn)
