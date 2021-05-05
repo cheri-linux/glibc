@@ -187,19 +187,25 @@ cheri_codeptrperm(const void *ptr, size_t len, register_t perm)
 static __always_inline void * __capability
 cheri_long(const long addr, size_t len)
 {
-	if (!addr)
-		return 0;
-	return cheri_setaddress(cheri_getdefault(), addr);
-	//return cheri_csetbounds(cheri_setaddress(cheri_getdefault(), addr), len);
+//	if (!addr)
+//		return 0;
+	//return cheri_setaddress(cheri_getdefault(), addr);
+	if (len == -1)
+		return cheri_setaddress(cheri_getdefault(), addr);
+	else
+		return cheri_csetbounds(cheri_setaddress(cheri_getdefault(), addr), len);
 }
 
 static __inline void * __capability
 cheri_codeptr_long(const long addr, size_t len)
 {
-	if (!addr)
-		return 0;
-	return cheri_setaddress(cheri_getpcc(), addr);
-	//return cheri_csetbounds(cheri_setaddress(cheri_getdefault(), addr), len);
+//	if (!addr)
+//		return 0;
+	//return cheri_setaddress(cheri_getpcc(), addr);
+	if (len == -1)
+		return cheri_setaddress(cheri_getpcc(), addr);
+	else
+		return cheri_csetbounds(cheri_setaddress(cheri_getpcc(), addr), len);
 }
 
 static __inline void * __capability
