@@ -30,8 +30,6 @@ extern int __brk (void *addr);
 void *
 __sbrk (intptr_t increment)
 {
-  void *oldbrk;
-
   /* If this is not part of the dynamic library or the library is used
      via dynamic loading in a statically linked program update
      __curbrk from the kernel's brk value.  That way two separate
@@ -44,19 +42,18 @@ __sbrk (intptr_t increment)
   if (increment == 0)
     return __curbrk;
 
-  oldbrk = __curbrk;
   if (increment > 0
-      ? ((uintptr_t) oldbrk + (uintptr_t) increment < (uintptr_t) oldbrk)
-      : ((uintptr_t) oldbrk < (uintptr_t) -increment))
+      ? ((uintptr_t) __curbrk + (uintptr_t) increment < (uintptr_t) __curbrk)
+      : ((uintptr_t) __curbrk < (uintptr_t) -increment))
     {
       __set_errno (ENOMEM);
       return (void *) -1;
     }
 
-  if (__brk (oldbrk + increment) < 0)
+  if (__brk (__curbrk + increment) < 0)
     return (void *) -1;
 
-  return oldbrk;
+  return __curbrk - increment;
 }
 libc_hidden_def (__sbrk)
 weak_alias (__sbrk, sbrk)

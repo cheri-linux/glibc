@@ -22,11 +22,12 @@
 
 #ifdef __CHERI_PURE_CAPABILITY__
 #include <cheric.h>
-void *__brkstart = NULL;
+//void *__brkstart = NULL;
+#define BRKSTART 0x0
 #endif
 
 /* This must be initialized data because commons can't have aliases.  */
-void *__curbrk = 0;
+void *__curbrk = NULL;
 
 /* Old braindamage in GCC's crtstuff.c requires this symbol in an attempt
    to work around different old braindamage in the old Linux ELF dynamic
@@ -48,9 +49,7 @@ __brk (void *addr)
     }
 
   #ifdef __CHERI_PURE_CAPABILITY__
-  if (__curbrk == NULL)
-    __brkstart = tmpbrk;
-  __curbrk = CHERI_CAST (tmpbrk, tmpbrk - __brkstart);
+  __curbrk = cheri_setaddress(CHERI_CAST (BRKSTART, tmpbrk - BRKSTART), tmpbrk);
   #else
   __curbrk = tmpbrk;
   #endif
