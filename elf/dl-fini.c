@@ -132,7 +132,9 @@ _dl_fini (void)
 			{
 			  fini_t *array =
 			    (fini_t *) (CHERI_CAST(l->l_addr
-					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr, -1));
+					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr, 
+						  l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
+						));
 			  /* Cheri: Note that DT_FINI_ARRAY contains capabilities */
 			  unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
 					    / sizeof (fini_t *));

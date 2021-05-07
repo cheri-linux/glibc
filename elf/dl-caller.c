@@ -20,6 +20,7 @@
 #include <ldsodefs.h>
 #include <stddef.h>
 #include <caller.h>
+#include <stdint.h>
 #include <gnu/lib-names.h>
 
 
@@ -37,8 +38,8 @@ _dl_check_caller (const void *caller, enum allowmask mask)
   for (Lmid_t ns = 0; ns < GL(dl_nns); ++ns)
     for (struct link_map *l = GL(dl_ns)[ns]._ns_loaded; l != NULL;
 	 l = l->l_next)
-      if (caller >= (const void *) CHERI_CAST(l->l_map_start, -1)
-	  && caller < (const void *) CHERI_CAST(l->l_text_end, -1))
+      if (caller >= (uintptr_t) l->l_map_start
+	  && caller < (uintptr_t) l->l_text_end)
 	{
 	  /* The address falls into this DSO's address range.  Check the
 	     name.  */
@@ -77,8 +78,8 @@ _dl_check_caller (const void *caller, enum allowmask mask)
 
   /* Maybe the dynamic linker is not yet on the list.  */
   if ((mask & allow_ldso) != 0
-      && caller >= (const void *) CHERI_CAST(GL(dl_rtld_map).l_map_start, -1)
-      && caller < (const void *) CHERI_CAST(GL(dl_rtld_map).l_text_end, -1))
+      && caller >= (uintptr_t) GL(dl_rtld_map).l_map_start
+      && caller < (uintptr_t) GL(dl_rtld_map).l_text_end)
     return 0;
 
   /* No valid caller.  */

@@ -281,7 +281,9 @@ _dl_close_worker (struct link_map *map, bool force)
 		{
 		  ElfW(Addr) *array =
 		    (ElfW(Addr) *) (CHERI_CAST(imap->l_addr
-				    + imap->l_info[DT_FINI_ARRAY]->d_un.d_ptr, -1));
+				    + imap->l_info[DT_FINI_ARRAY]->d_un.d_ptr, 
+					  imap->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
+					));
 		  unsigned int sz = (imap->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
 				     / sizeof (ElfW(Addr)));
 

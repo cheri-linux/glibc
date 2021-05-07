@@ -465,7 +465,7 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
 		  && map->l_info[DT_RELASZ]->d_un.d_val != 0)
 		{
 		  const ElfW(Rela) *rela
-		    = (const ElfW(Rela) *) CHERI_CAST(D_PTR (map, l_info[DT_RELA]), -1);
+		    = (const ElfW(Rela) *) CHERI_CAST(D_PTR (map, l_info[DT_RELA]), map->l_info[DT_RELASZ]->d_un.d_val);
 		  unsigned int rela_count
 		    = map->l_info[DT_RELASZ]->d_un.d_val / sizeof (*rela);
 
