@@ -247,6 +247,10 @@
 /* For SINGLE_THREAD_P.  */
 #include <sysdep-cancel.h>
 
+#ifdef __CHERI_PURE_CAPABILITY__
+#include <cheric.h>
+#endif
+
 /*
   Debugging:
 
@@ -2548,8 +2552,20 @@ sysmalloc (INTERNAL_SIZE_T nb, mstate av)
              If MORECORE extends previous space, we can likewise extend top size.
            */
 
-          if (brk == old_end && snd_brk == (char *) (MORECORE_FAILURE))
+          /* For Cheri we have to additionally update av-top to contain a cap
+           * with adjusted bounds from sbrk.  Normally, this part would go into
+           * the following if-clause, but there seems to be a compiler bug: when
+           * trying to assign brk (in any form) to av->top, av->top does not get
+           * the brk's bounds. maybe there is some optimization at play. Having
+           * it here, outside the if-clause, works and should not change anything
+           * for the other if-cases. */
+          #ifdef __CHERI_PURE_CAPABILITY__
+          av->top = (mchunkptr) cheri_setaddress(brk, (long) av->top);
+          #endif
+
+          if (brk == old_end && snd_brk == (char *) (MORECORE_FAILURE)) {
             set_head (old_top, (size + old_size) | PREV_INUSE);
+	    }
 
           else if (contiguous (av) && old_size && brk < old_end)
 	    /* Oops!  Someone else killed our space..  Can't touch anything.  */
