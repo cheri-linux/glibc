@@ -332,12 +332,13 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	case R_RISCV_CHERI_CAPABILITY:
 	  // sym_val_p ~> (sym_map->l_addr + sym->st_value) type: (void*) in musl
 	  // in musl: *(void**) reloc_addr = sym_val_p
-	  // TODO cheri: length of cap
 	  if (sym != NULL) {
 		  if (ELFW(ST_TYPE) (sym->st_info) == STT_FUNC) {
-			*(void**) addr_field =  (void*) CHERI_FN_CAST(sym_map->l_addr+ sym->st_value, -1);
+			// TODO Cheri depending on ABI set tight bounds for functions
+			// TODO Cheri make function sentry capability
+			*(void**) addr_field =  (void*) CHERI_FN_CAST(sym_map->l_addr + sym->st_value, -1);
 		  } else {
-			*(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, -1);
+			*(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, sym->st_size);
 		  }
 
 	  }
