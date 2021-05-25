@@ -249,6 +249,7 @@
 
 #ifdef __CHERI_PURE_CAPABILITY__
 #include <cheric.h>
+#define _BOUNDS
 #endif
 
 /*
@@ -465,6 +466,35 @@ void *(*__morecore)(ptrdiff_t) = __default_morecore;
 # define HAVE_MALLOC_INIT_HOOK 1
 #else
 # define HAVE_MALLOC_INIT_HOOK 0
+#endif
+
+
+#ifdef _BOUNDS
+static void *bound_ptr(void *p, size_t nbytes)
+{
+	p = cheri_andperm(cheri_csetbounds(p, nbytes),
+			CHERI_PERMS_USERSPACE_DATA & ~CHERI_PERM_CHERIABI_VMMAP);
+	return p;
+}
+
+static void *unbound_ptr(void *p)
+{
+	p = cheri_setaddress(cheri_getdefault(), (long)p);
+	return p;
+}
+
+#else
+
+static inline void *bound_ptr(void *p, size_t nbytes)
+{
+	return p;
+}
+
+static inline void *unbound_ptr(void *p)
+{
+	return p;
+}
+
 #endif
 
 
@@ -1187,7 +1217,6 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
 /* conversion from malloc headers to user pointers, and back */
-
 #define chunk2mem(p)   ((void*)((char*)(p) + 2*SIZE_SZ))
 #define mem2chunk(mem) ((mchunkptr)((char*)(mem) - 2*SIZE_SZ))
 
@@ -3103,7 +3132,9 @@ __libc_malloc (size_t bytes)
 
   assert (!victim || chunk_is_mmapped (mem2chunk (victim)) ||
           ar_ptr == arena_for_chunk (mem2chunk (victim)));
-  return victim;
+
+  return bound_ptr(victim, bytes);
+
 }
 libc_hidden_def (__libc_malloc)
 
@@ -3124,8 +3155,7 @@ __libc_free (void *mem)
   if (mem == 0)                              /* free(0) has no effect */
     return;
 
-  p = mem2chunk (mem);
-
+  p = mem2chunk (unbound_ptr(mem));
   if (chunk_is_mmapped (p))                       /* release mmapped memory. */
     {
       /* See if the dynamic brk/mmap threshold needs adjusting.
@@ -3247,8 +3277,7 @@ __libc_realloc (void *oldmem, size_t bytes)
       newp = _int_realloc (ar_ptr, oldp, oldsize, nb);
       assert (!newp || chunk_is_mmapped (mem2chunk (newp)) ||
 	      ar_ptr == arena_for_chunk (mem2chunk (newp)));
-
-      return newp;
+      return bound_ptr(newp, bytes);
     }
 
   __libc_lock_lock (ar_ptr->mutex);
@@ -3270,8 +3299,7 @@ __libc_realloc (void *oldmem, size_t bytes)
           _int_free (ar_ptr, oldp, 0);
         }
     }
-
-  return newp;
+  return bound_ptr(newp, bytes);
 }
 libc_hidden_def (__libc_realloc)
 
