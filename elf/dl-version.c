@@ -28,6 +28,7 @@
 
 #include <assert.h>
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 static inline struct link_map *
 __attribute ((always_inline))

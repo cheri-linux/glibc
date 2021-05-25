@@ -19,7 +19,8 @@
 #include <stddef.h>
 #include <ldsodefs.h>
 #include <cheric.h>
-
+// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_FN_CAST bounds?
 
 /* Type of the initializer.  */
 typedef void (*init_t) (int, char **, char **);

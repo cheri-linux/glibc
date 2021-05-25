@@ -36,6 +36,7 @@
 #include <stackinfo.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 extern char *__progname;
 char **_dl_argv = &__progname;	/* This is checked for some error messages.  */

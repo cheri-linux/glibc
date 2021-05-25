@@ -17,6 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 static inline void __attribute__ ((always_inline))
 setup_vdso (struct link_map *main_map __attribute__ ((unused)),

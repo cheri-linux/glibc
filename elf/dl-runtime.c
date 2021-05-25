@@ -29,7 +29,7 @@
 #include <dl-irel.h>
 
 #include <cheric.h>
-
+// TODO Cheri CHERI_CAST bounds?
 
 #if (!ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
     || ELF_MACHINE_NO_REL

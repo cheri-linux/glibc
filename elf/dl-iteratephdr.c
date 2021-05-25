@@ -23,7 +23,7 @@
 #include <libc-lock.h>
 
 #include <cheric.h>
-
+// TODO Cheri CHERI_CAST bounds?
 static void
 cancel_handler (void *arg __attribute__((unused)))
 {

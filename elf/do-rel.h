@@ -20,6 +20,7 @@
    `elf_dynamic_do_rel' and `elf_dynamic_do_rela'.  */
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 #ifdef DO_RELA
 # define elf_dynamic_do_Rel		elf_dynamic_do_Rela

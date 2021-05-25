@@ -40,6 +40,8 @@
 #include <tls.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_FN_CAST bounds?
 
 __BEGIN_DECLS
 

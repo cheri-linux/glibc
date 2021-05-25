@@ -46,6 +46,7 @@
 #include <dl-machine-reject-phdr.h>
 #include <dl-sysdep-open.h>
 
+// TODO Cheri CHERI_CAST bounds?
 
 #include <endian.h>
 #if BYTE_ORDER == BIG_ENDIAN

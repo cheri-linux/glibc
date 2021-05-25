@@ -38,6 +38,7 @@
 #include <atomic.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 /* The LD_PROFILE feature has to be implemented different to the
    normal profiling using the gmon/ functions.  The problem is that an

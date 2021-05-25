@@ -46,6 +46,8 @@
 
 #endif /* n NESTING */
 
+// TODO Cheri bounds?
+
 void
 _dl_resolve_conflicts (struct link_map *l, ElfW(Rela) *conflict,
 		       ElfW(Rela) *conflictend)

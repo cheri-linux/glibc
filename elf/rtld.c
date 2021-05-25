@@ -45,6 +45,7 @@
 #ifdef __CHERI_PURE_CAPABILITY__
 #include <cheri_globals.h>
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 #endif
 
 #include <assert.h>

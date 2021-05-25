@@ -21,6 +21,7 @@
 #include <ldsodefs.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_FN_CAST bounds?
 
 /* Type of the constructor functions.  */
 typedef void (*fini_t) (void);

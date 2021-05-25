@@ -79,6 +79,7 @@ malloc (size_t n)
 		     MAP_ANON|MAP_PRIVATE, -1, 0);
       if (page == MAP_FAILED)
 	return NULL;
+      // TODO Cheri CHERI_CAST bounds? 
       page = CHERI_CAST(page, -1);
       if (page != alloc_end)
 	alloc_ptr = page;

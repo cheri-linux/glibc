@@ -23,6 +23,7 @@
 #include <sys/mman.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 /* _dl_map_segments ensures that any whole pages in gaps between segments
    are filled in with PROT_NONE mappings.  So we can just unmap the whole

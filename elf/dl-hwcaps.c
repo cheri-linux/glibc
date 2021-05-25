@@ -25,7 +25,7 @@
 
 #include <dl-procinfo.h>
 #include <dl-hwcaps.h>
-
+// TODO Cheri CHERI_CAST bounds?
 #include <cheric.h>
 
 #ifdef _DL_FIRST_PLATFORM

@@ -20,6 +20,7 @@
 #define _DL_IREL_H
 
 #include <cheric.h>
+// TODO Cheri CHERI_FN_CAST bounds?
 
 static inline DL_FIXUP_VALUE_TYPE
 __attribute ((always_inline))

@@ -30,6 +30,7 @@
 #include <dl-irel.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 #ifdef SHARED
 /* Systems which do not have tls_index also probably have to define

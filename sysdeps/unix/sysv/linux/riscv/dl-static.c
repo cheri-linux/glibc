@@ -19,6 +19,7 @@
 #include <ldsodefs.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 #ifdef SHARED
 

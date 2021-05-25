@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <ldsodefs.h>
 
+// TODO Cheri bounds?
 #include <cheric.h>
 
 static inline void

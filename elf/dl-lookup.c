@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 /* Return nonzero if check_match should consider SYM to fail to match a
    symbol reference for some machine-specific reason.  */

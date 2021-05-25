@@ -30,6 +30,7 @@
 
 #include <cheric.h>
 #include <cheri_globals.h>
+// TODO Cheri CHERI_CAST bounds?
 
 /* Statistics function.  */
 #ifdef SHARED

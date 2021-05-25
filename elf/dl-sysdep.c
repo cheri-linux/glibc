@@ -46,6 +46,7 @@
 
 #include <dl-tunables.h>
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 extern char **_environ attribute_hidden;
 extern char _end[] attribute_hidden;

@@ -27,6 +27,8 @@
 #include <dl-tls.h>
 
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_FN_CAST bounds?
 
 #ifndef _RTLD_PROLOGUE
 # define _RTLD_PROLOGUE(entry)						\

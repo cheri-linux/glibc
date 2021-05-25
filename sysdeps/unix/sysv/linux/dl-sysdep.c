@@ -26,6 +26,7 @@
 #include <sys/utsname.h>
 #include <ldsodefs.h>
 #include <cheric.h>
+// TODO Cheri CHERI_CAST bounds?
 
 #ifdef SHARED
 # define DL_SYSDEP_INIT frob_brk ()

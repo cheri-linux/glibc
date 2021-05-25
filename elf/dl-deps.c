@@ -29,7 +29,7 @@
 #include <ldsodefs.h>
 
 #include <dl-dst.h>
-
+// TODO Cheri CHERI_CAST bounds?
 #include <cheric.h>
 
 /* Whether an shared object references one or more auxiliary objects
