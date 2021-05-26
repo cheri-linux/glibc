@@ -3366,7 +3366,7 @@ _mid_memalign (size_t alignment, size_t bytes, void *address)
       assert (!p || chunk_is_mmapped (mem2chunk (p)) ||
 	      &main_arena == arena_for_chunk (mem2chunk (p)));
 
-      return p;
+      return bound_ptr(p, bytes);
     }
 
   arena_get (ar_ptr, bytes + alignment + MINSIZE);
@@ -3384,7 +3384,7 @@ _mid_memalign (size_t alignment, size_t bytes, void *address)
 
   assert (!p || chunk_is_mmapped (mem2chunk (p)) ||
           ar_ptr == arena_for_chunk (mem2chunk (p)));
-  return p;
+  return bound_ptr(p, bytes);
 }
 /* For ISO C11.  */
 weak_alias (__libc_memalign, aligned_alloc)
