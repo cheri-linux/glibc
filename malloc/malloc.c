@@ -3521,9 +3521,9 @@ __libc_calloc (size_t n, size_t elem_size)
   if (chunk_is_mmapped (p))
     {
       if (__builtin_expect (perturb_byte, 0))
-        return memset (mem, 0, sz);
+        return bound_ptr(memset (mem, 0, sz), sz);
 
-      return mem;
+      return bound_ptr(mem, sz);
     }
 
   csz = chunksize (p);
@@ -3545,7 +3545,7 @@ __libc_calloc (size_t n, size_t elem_size)
   assert (nclears >= 3);
 
   if (nclears > 9)
-    return memset (d, 0, clearsize);
+    return bound_ptr(memset (d, 0, clearsize), sz);
 
   else
     {
@@ -3569,7 +3569,7 @@ __libc_calloc (size_t n, size_t elem_size)
         }
     }
 
-  return mem;
+  return bound_ptr(mem, sz);
 }
 
 /*
