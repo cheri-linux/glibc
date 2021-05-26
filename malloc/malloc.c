@@ -1217,8 +1217,14 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
 /* conversion from malloc headers to user pointers, and back */
+
+#ifndef __CHERI_PURE_CAPABILITY__
 #define chunk2mem(p)   ((void*)((char*)(p) + 2*SIZE_SZ))
 #define mem2chunk(mem) ((mchunkptr)((char*)(mem) - 2*SIZE_SZ))
+#else
+#define chunk2mem(p)   ((void*)((char*)(p) + 2*SIZE_SZ))
+#define mem2chunk(mem) ((mchunkptr)unbound_ptr((char*)(mem) - 2*SIZE_SZ))
+#endif
 
 /* The smallest possible chunk */
 #define MIN_CHUNK_SIZE        (offsetof(struct malloc_chunk, fd_nextsize))
