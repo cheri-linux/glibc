@@ -479,6 +479,7 @@ static void *bound_ptr(void *p, size_t nbytes)
 
 static void *unbound_ptr(void *p)
 {
+        // TODO Cheri: limited unbounded capability, e.g., only heap_for_ptr
 	p = cheri_setaddress(cheri_getdefault(), (long)p);
 	return p;
 }
@@ -3118,7 +3119,9 @@ __libc_malloc (size_t bytes)
       victim = _int_malloc (&main_arena, bytes);
       assert (!victim || chunk_is_mmapped (mem2chunk (victim)) ||
 	      &main_arena == arena_for_chunk (mem2chunk (victim)));
-      return victim;
+
+      return bound_ptr(victim, bytes);
+
     }
 
   arena_get (ar_ptr, bytes);
