@@ -30,7 +30,7 @@ WCSCPY (wchar_t *dest, const wchar_t *src)
 {
   wint_t c;
   wchar_t *wcp;
-
+#ifndef __CHERI_PURE_CAPABILITY__
   if (__alignof__ (wchar_t) >= sizeof (wchar_t))
     {
       const ptrdiff_t off = dest - src - 1;
@@ -45,6 +45,7 @@ WCSCPY (wchar_t *dest, const wchar_t *src)
       while (c != L'\0');
     }
   else
+#endif
     {
       wcp = dest;
 
