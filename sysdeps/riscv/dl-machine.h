@@ -336,7 +336,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 		  if (ELFW(ST_TYPE) (sym->st_info) == STT_FUNC) {
 			// TODO Cheri depending on ABI set tight bounds for functions
 			// TODO Cheri make function sentry capability
-			*(void**) addr_field =  (void*) CHERI_FN_CAST(sym_map->l_addr + sym->st_value, -1);
+			*(void**) addr_field =  __builtin_cheri_seal_entry((void*) CHERI_FN_CAST(sym_map->l_addr + sym->st_value, -1));
 		  } else {
 			*(void**) addr_field =  (void*) CHERI_CAST(sym_map->l_addr+ sym->st_value, sym->st_size);
 		  }
