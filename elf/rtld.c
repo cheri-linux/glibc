@@ -522,7 +522,33 @@ _dl_start (void *arg)
 	 TODO: Bound caps similar to __cheri_init_globals */
   __cheri_init_caps caps = {0};
   caps.base = l_addr;
-  __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
+//   __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
+  ElfW(auxv_t) *avp;
+  char ** envp = ((char**) arg) + 2 + (*(long*)arg);
+  while (*envp) {
+	  envp += 1;
+  }
+  avp = (ElfW(auxv_t) *) ((long*) envp + 1);
+	const ElfW(Phdr) *phdr;
+	ElfW(Word) phnum;
+	while (avp->a_type) {
+		switch (avp->a_type) {
+			case AT_PHDR:
+				phdr = cheri_setaddress(cheri_getdefault(), avp->a_un.a_val);
+				break;
+			case AT_PHNUM:
+				phnum = avp->a_un.a_val;
+				break;
+		}
+		if (avp->a_type == AT_BASE && avp->a_un.a_val) {
+			ElfW(Ehdr) *eh = cheri_setaddress(cheri_getdefault(), l_addr);
+			phdr = cheri_setaddress(cheri_getdefault(), avp->a_un.a_val + eh->e_phoff);
+			phnum = eh->e_phnum;
+			break;
+		}
+		avp++;
+	}
+  __cheri_init_globals(phdr, phnum, &caps);
 #endif
 
   /* Figure out the run-time load address of the dynamic linker itself.  */
