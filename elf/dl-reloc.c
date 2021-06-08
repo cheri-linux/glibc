@@ -226,7 +226,8 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
      caps.base = l->l_addr;
      caps.start_cap_relocs = (struct capreloc *) CHERI_CAST(capreloc_start + caps.base, capreloc_size);
      caps.stop_cap_relocs = (void *)caps.start_cap_relocs + capreloc_size;
-     __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
+     // TODO Cheri: use a different capability then the phdr as base cap
+     __cheri_init_globals(cheri_setaddress(cheri_getdefault(), l->l_phdr), l->l_phnum, &caps);
    }
   #endif
 
