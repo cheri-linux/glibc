@@ -310,8 +310,8 @@ _dl_start_profile (void)
 	  != offsetof (struct gmon_hist_hdr, dimen_abbrev)))
     abort ();
 
-  hist_hdr.low_pc = (char *) CHERI_CAST(mapstart, -1);
-  hist_hdr.high_pc = (char *) CHERI_CAST(mapend, -1);
+  hist_hdr.low_pc = (char *) CHERI_CAST(mapstart, mapend - mapstart);
+  hist_hdr.high_pc = (char *) CHERI_CAST(mapend, 0);
   hist_hdr.hist_size = kcountsize / sizeof (HISTCOUNTER);
   hist_hdr.prof_rate = __profile_frequency ();
   if (sizeof (hist_hdr.dimen) >= sizeof ("seconds"))

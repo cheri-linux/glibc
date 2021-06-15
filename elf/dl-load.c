@@ -46,7 +46,7 @@
 #include <dl-machine-reject-phdr.h>
 #include <dl-sysdep-open.h>
 
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_CAST (tighter) bounds? -> e.g. strlen for stting table entries
 
 #include <endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
@@ -668,8 +668,11 @@ cache_rpath (struct link_map *l,
     }
 
   /* Make sure the cache information is available.  */
+  ElfW(Addr) strtab_ent = D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[tag]->d_un.d_val;
+  ElfW(Addr) strtab_end = D_PTR (l, l_info[DT_STRTAB]) + l->l_info[DT_STRSZ]->d_un.d_val;
   return decompose_rpath (sp, (const char *) (CHERI_CAST(D_PTR (l, l_info[DT_STRTAB])
-					      + l->l_info[tag]->d_un.d_val, -1)),
+					      + l->l_info[tag]->d_un.d_val, strtab_end - strtab_ent)),
 			  l, what);
 }
 
@@ -757,9 +760,13 @@ _dl_init_paths (const char *llp)
 	{
 	  /* Allocate room for the search path and fill in information
 	     from RUNPATH.  */
+          ElfW(Addr) strtab_ent = D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[DT_RUNPATH]->d_un.d_val;
+          ElfW(Addr) strtab_end = D_PTR (l, l_info[DT_STRTAB]) + l->l_info[DT_STRSZ]->d_un.d_val;
 	  decompose_rpath (&l->l_runpath_dirs,
 			   (const void *) (CHERI_CAST(D_PTR (l, l_info[DT_STRTAB])
-					   + l->l_info[DT_RUNPATH]->d_un.d_val, -1)),
+					   + l->l_info[DT_RUNPATH]->d_un.d_val,
+                                           strtab_end - strtab_ent)),
 			   l, "RUNPATH");
 	  /* During rtld init the memory is allocated by the stub malloc,
 	     prevent any attempt to free it by the normal malloc.  */
@@ -776,9 +783,12 @@ _dl_init_paths (const char *llp)
 	    {
 	      /* Allocate room for the search path and fill in information
 		 from RPATH.  */
+              ElfW(Addr) strtab_ent = D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[DT_RUNPATH]->d_un.d_val;
+              ElfW(Addr) strtab_end = D_PTR (l, l_info[DT_STRTAB]) + l->l_info[DT_STRSZ]->d_un.d_val;
 	      decompose_rpath (&l->l_rpath_dirs,
 			       (const void *) (CHERI_CAST(D_PTR (l, l_info[DT_STRTAB])
-					       + l->l_info[DT_RPATH]->d_un.d_val, -1)),
+					       + l->l_info[DT_RPATH]->d_un.d_val, strtab_end - strtab_ent)),
 			       l, "RPATH");
 	      /* During rtld init the memory is allocated by the stub
 		 malloc, prevent any attempt to free it by the normal
@@ -1053,12 +1063,15 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	      /* Debuginfo only files from "objcopy --only-keep-debug"
 		 contain a PT_DYNAMIC segment with p_filesz == 0.  Skip
 		 such a segment to avoid a crash later.  */
-	      l->l_ld = (void *) CHERI_CAST(ph->p_vaddr, -1);
+	      l->l_ld = (void *) CHERI_CAST(ph->p_vaddr, ph->p_memsz);
 	      l->l_ldnum = ph->p_memsz / sizeof (ElfW(Dyn));
 	    }
 	  break;
 
 	case PT_PHDR:
+        /* Cheri: The phdr is used to derive the bounded pointers for the segments after relocations. Hence, we cannot bound it here.
+         * As the capability for the data segment is also derived, no permissions can be cleared, too.
+         */
 	  l->l_phdr = (void *) CHERI_CAST(ph->p_vaddr, -1);
 	  break;
 
@@ -1119,6 +1132,8 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	  l->l_tls_initimage_size = ph->p_filesz;
 	  /* Since we don't know the load address yet only store the
 	     offset.  We will adjust it later.  */
+          /* Cheri: Since this is an offset, bounds on it produce a tag violation when the load address is added.
+             Bounds are set upon adjustment*/
 	  l->l_tls_initimage = (void *) CHERI_CAST(ph->p_vaddr, -1);
 
 	  /* If not loading the initial set of shared libraries,
@@ -1194,7 +1209,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	}
     }
   else
-    l->l_ld = (ElfW(Dyn) *) (CHERI_CAST((ElfW(Addr)) l->l_ld + l->l_addr, -1));
+    l->l_ld = (ElfW(Dyn) *) (CHERI_CAST((ElfW(Addr)) l->l_ld + l->l_addr, l->l_ldnum * sizeof(ElfW(Dyn))));
 
   elf_get_dynamic_info (l, NULL);
 
@@ -1235,7 +1250,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
     }
   else
     /* Adjust the PT_PHDR value by the runtime load address.  */
-    l->l_phdr = (ElfW(Phdr) *) (CHERI_CAST((ElfW(Addr)) l->l_phdr + l->l_addr, -1));
+    l->l_phdr = (ElfW(Phdr) *) (CHERI_CAST((ElfW(Addr)) l->l_phdr + l->l_addr, l->l_phnum * sizeof(ElfW(Phdr))));
 
   if (__glibc_unlikely ((stack_flags &~ GL(dl_stack_flags)) & PF_X))
     {
@@ -1292,7 +1307,7 @@ cannot enable executable stack as shared object requires");
 
   /* Adjust the address of the TLS initialization image.  */
   if (l->l_tls_initimage != NULL)
-    l->l_tls_initimage = (char *) l->l_tls_initimage + l->l_addr;
+    l->l_tls_initimage = CHERI_CAST((char *) l->l_tls_initimage + l->l_addr, l->l_tls_initimage_size);
 
   /* We are done mapping in the file.  We no longer need the descriptor.  */
   if (__glibc_unlikely (__close (fd) != 0))
@@ -1366,10 +1381,13 @@ cannot enable executable stack as shared object requires");
   /* When we profile the SONAME might be needed for something else but
      loading.  Add it right away.  */
   if (__glibc_unlikely (GLRO(dl_profile) != NULL)
-      && l->l_info[DT_SONAME] != NULL)
+      && l->l_info[DT_SONAME] != NULL) {
+    ElfW(Addr) strtab_ent = D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[DT_SONAME]->d_un.d_val;
+    ElfW(Addr) strtab_end = D_PTR (l, l_info[DT_STRTAB]) + l->l_info[DT_STRSZ]->d_un.d_val;
     add_name_to_object (l, ((const char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB])
-			    + l->l_info[DT_SONAME]->d_un.d_val, -1)));
-
+			    + l->l_info[DT_SONAME]->d_un.d_val, strtab_end - strtab_ent)));
+  }
 #ifdef DL_AFTER_LOAD
   DL_AFTER_LOAD (l);
 #endif
@@ -1943,8 +1961,11 @@ _dl_map_object (struct link_map *loader, const char *name,
 	      || l->l_info[DT_SONAME] == NULL)
 	    continue;
 
+          ElfW(Addr) strtab_ent = D_PTR (l, l_info[DT_STRTAB])
+					   + l->l_info[DT_SONAME]->d_un.d_val;
+          ElfW(Addr) strtab_end = D_PTR (l, l_info[DT_STRTAB]) + l->l_info[DT_STRSZ]->d_un.d_val;
 	  soname = ((const char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB])
-		    + l->l_info[DT_SONAME]->d_un.d_val, -1));
+		    + l->l_info[DT_SONAME]->d_un.d_val, strtab_end - strtab_ent));
 	  if (strcmp (name, soname) != 0)
 	    continue;
 

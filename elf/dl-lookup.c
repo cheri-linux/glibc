@@ -379,7 +379,7 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
 
       /* The tables for this map.  */
       const ElfW(Sym) *symtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_SYMTAB]), -1);
-      const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
+      const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val);
 
       const ElfW(Sym) *sym;
       const ElfW(Addr) *bitmask = map->l_gnu_bitmask;

@@ -45,7 +45,7 @@
 #ifdef __CHERI_PURE_CAPABILITY__
 #include <cheri_globals.h>
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_CAST bounds? -> versioning
 #endif
 
 #include <assert.h>
@@ -519,10 +519,9 @@ _dl_start (void *arg)
 #ifdef __CHERI_PURE_CAPABILITY__
   /* This should be the right place to init globals for cheri if we 
      want to get rid of the bootstrap map, i.e. set DONT_USE_BOOTSTRAP_MAP
-	 TODO: Bound caps similar to __cheri_init_globals */
+   */
   __cheri_init_caps caps = {0};
   caps.base = l_addr;
-//   __cheri_init_globals_3(cheri_getdefault(),cheri_getpcc(),cheri_getdefault(),&caps);
   ElfW(auxv_t) *avp;
   char ** envp = ((char**) arg) + 2 + (*(long*)arg);
   while (*envp) {
@@ -531,6 +530,7 @@ _dl_start (void *arg)
   avp = (ElfW(auxv_t) *) ((long*) envp + 1);
 	const ElfW(Phdr) *phdr;
 	ElfW(Word) phnum;
+        ElfW(Half) phent;
 	while (avp->a_type) {
 		switch (avp->a_type) {
 			case AT_PHDR:
@@ -539,16 +539,20 @@ _dl_start (void *arg)
 			case AT_PHNUM:
 				phnum = avp->a_un.a_val;
 				break;
+                        case AT_PHENT:
+                                phent = avp->a_un.a_val;
 		}
 		if (avp->a_type == AT_BASE && avp->a_un.a_val) {
 			ElfW(Ehdr) *eh = cheri_setaddress(cheri_getdefault(), l_addr);
 			phdr = cheri_setaddress(cheri_getdefault(), avp->a_un.a_val + eh->e_phoff);
 			phnum = eh->e_phnum;
+                        phent = eh->e_phentsize;
 			break;
 		}
 		avp++;
 	}
   __cheri_init_globals(phdr, phnum, &caps);
+  phdr = cheri_csetbounds(phdr, phnum * phent);
 #endif
 
   /* Figure out the run-time load address of the dynamic linker itself.  */
@@ -728,16 +732,17 @@ find_needed (const char *name)
 static int
 match_version (const char *string, struct link_map *map)
 {
-  const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
+  const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val);
   ElfW(Verdef) *def;
 
 #define VERDEFTAG (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (DT_VERDEF))
+#define VERDEFNUMTAG (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (DT_VERDEFNUM))
   if (map->l_info[VERDEFTAG] == NULL)
     /* The file has no symbol versioning.  */
     return 0;
 
   def = (ElfW(Verdef) *) ((char *) CHERI_CAST(map->l_addr
-			  + map->l_info[VERDEFTAG]->d_un.d_ptr, -1));
+			  + map->l_info[VERDEFTAG]->d_un.d_ptr, map->l_info[VERDEFNUMTAG]->d_un.d_val * sizeof(ElfW(Verdef))));
   while (1)
     {
       ElfW(Verdaux) *aux = (ElfW(Verdaux) *) ((char *) def + def->vd_aux);
@@ -1236,7 +1241,7 @@ of this helper program; chances are you did not intend to run this program.\n\
       case PT_DYNAMIC:
 	/* This tells us where to find the dynamic section,
 	   which tells us everything we need to do.  */
-	main_map->l_ld = (void *) CHERI_CAST(main_map->l_addr + ph->p_vaddr, -1);
+	main_map->l_ld = (void *) CHERI_CAST(main_map->l_addr + ph->p_vaddr, ph->p_memsz);
 	break;
       case PT_INTERP:
 	/* This "interpreter segment" was used by the program loader to
@@ -1246,7 +1251,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 	   against the dynamic linker as a shared library, will know that
 	   the shared object is already loaded.  */
 	_dl_rtld_libname.name = ((const char *) CHERI_CAST(main_map->l_addr
-				 + ph->p_vaddr, -1));
+				 + ph->p_vaddr, ph->p_memsz));
 	/* _dl_rtld_libname.next = NULL;	Already zero.  */
 	GL(dl_rtld_map).l_libname = &_dl_rtld_libname;
 
@@ -1310,7 +1315,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 	      main_map->l_tls_firstbyte_offset = (ph->p_vaddr
 						  & (ph->p_align - 1));
 	    main_map->l_tls_initimage_size = ph->p_filesz;
-	    main_map->l_tls_initimage = (void *) CHERI_CAST(ph->p_vaddr, -1);
+	    main_map->l_tls_initimage = (void *) CHERI_CAST(ph->p_vaddr, ph->p_filesz);
 
 	    /* This image gets the ID one.  */
 	    GL(dl_tls_max_dtv_idx) = main_map->l_tls_modid = 1;
@@ -1355,8 +1360,12 @@ of this helper program; chances are you did not intend to run this program.\n\
 		 + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_val, -1)) != 0)
     {
       static struct libname_list newname;
+      ElfW(Addr) strtab_entry = D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
+		      + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_ptr;
+      ElfW(Addr) strtab_end = D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
+                      + GL(dl_rtld_map).l_info[DT_STRSZ]->d_un.d_val;
 newname.name = ((char *) CHERI_CAST(D_PTR (&GL(dl_rtld_map), l_info[DT_STRTAB])
-		      + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_ptr, -1));
+		      + GL(dl_rtld_map).l_info[DT_SONAME]->d_un.d_ptr, strtab_end - strtab_entry));
       newname.next = NULL;
       newname.dont_free = 1;
 
@@ -2049,6 +2058,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 		}
 	    }
 #define VERNEEDTAG (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (DT_VERNEED))
+#define VERNEEDNUMTAG (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (DT_VERNEEDNUM))
 	  if (version_info)
 	    {
 	      /* Print more information.  This means here, print information
@@ -2065,7 +2075,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 		  if (dyn == NULL)
 		    continue;
 
-		  strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
+		  strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val);
 		  ent = (ElfW(Verneed) *) CHERI_CAST((map->l_addr + dyn->d_un.d_ptr), -1);
 
 		  if (first)
@@ -2129,11 +2139,12 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
     {
       ElfW(Lib) *liblist, *liblistend;
       struct link_map **r_list, **r_listend, *l;
-      const char *strtab = (const void *) CHERI_CAST(D_PTR (main_map, l_info[DT_STRTAB]), -1);
+      const char *strtab = (const void *) CHERI_CAST(D_PTR (main_map, l_info[DT_STRTAB]), main_map->l_info[DT_STRSZ]->d_un.d_val);
 
       assert (main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)] != NULL);
+      // Why not D_PTR(main_map, l_info[ADDRIDX (DT_GNU_LIBLIST)])?
       liblist = (ElfW(Lib) *)
-		CHERI_CAST(main_map->l_info[ADDRIDX (DT_GNU_LIBLIST)]->d_un.d_ptr, -1);
+		CHERI_CAST(main_map->l_info[ADDRIDX (DT_GNU_LIBLIST)]->d_un.d_ptr, main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)]->d_un.d_val);
       liblistend = (ElfW(Lib) *)
 		   ((char *) liblist +
 		    main_map->l_info[VALIDX (DT_GNU_LIBLISTSZ)]->d_un.d_val);
@@ -2212,8 +2223,9 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 
 	  HP_TIMING_NOW (start);
 	  assert (main_map->l_info [VALIDX (DT_GNU_CONFLICTSZ)] != NULL);
+          // why not D_PTR macro?
 	  conflict = (ElfW(Rela) *)
-	    CHERI_CAST(main_map->l_info [ADDRIDX (DT_GNU_CONFLICT)]->d_un.d_ptr, -1);
+	    CHERI_CAST(main_map->l_info [ADDRIDX (DT_GNU_CONFLICT)]->d_un.d_ptr, main_map->l_info [VALIDX (DT_GNU_CONFLICTSZ)]->d_un.d_val);
 	  conflictend = (ElfW(Rela) *)
 	    ((char *) conflict
 	     + main_map->l_info [VALIDX (DT_GNU_CONFLICTSZ)]->d_un.d_val);

@@ -17,7 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri check bounds phdr etc (from RTLD)
 
 static inline void __attribute__ ((always_inline))
 setup_vdso (struct link_map *main_map __attribute__ ((unused)),
@@ -67,7 +67,7 @@ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
       l->l_addr = l->l_map_start - l->l_addr;
       l->l_map_end += l->l_addr;
       l->l_text_end += l->l_addr;
-      l->l_ld = (void *) CHERI_CAST(((ElfW(Addr)) l->l_ld + l->l_addr), -1);
+      l->l_ld = (void *) CHERI_CAST(((ElfW(Addr)) l->l_ld + l->l_addr), l->l_ldnum * sizeof(ElfW(Dyn)));
       elf_get_dynamic_info (l, dyn_temp);
       _dl_setup_hash (l);
       l->l_relocated = 1;
@@ -90,7 +90,7 @@ setup_vdso (struct link_map *main_map __attribute__ ((unused)),
 	{
 	  /* Work around a kernel problem.  The kernel cannot handle
 	     addresses in the vsyscall DSO pages in writev() calls.  */
-	  const char *dsoname = ((char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), -1)
+	  const char *dsoname = ((char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), l->l_info[DT_STRSZ]->d_un.d_val)
 				 + l->l_info[DT_SONAME]->d_un.d_val);
 	  size_t len = strlen (dsoname) + 1;
 	  char *copy = malloc (len);

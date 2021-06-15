@@ -29,7 +29,6 @@
 #include <ldsodefs.h>
 
 #include <dl-dst.h>
-// TODO Cheri CHERI_CAST bounds?
 #include <cheric.h>
 
 /* Whether an shared object references one or more auxiliary objects
@@ -226,7 +225,7 @@ _dl_map_object_deps (struct link_map *map,
 
       if (l->l_info[DT_NEEDED] || l->l_info[AUXTAG] || l->l_info[FILTERTAG])
 	{
-	  const char *strtab = (const void *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), -1);
+	  const char *strtab = (const void *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), l->l_info[DT_STRSZ]->d_un.d_val);
 	  struct openaux_args args;
 	  struct list *orig;
 	  const ElfW(Dyn) *d;

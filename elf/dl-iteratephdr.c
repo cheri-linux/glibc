@@ -53,9 +53,9 @@ __dl_iterate_phdr (int (*callback) (struct dl_phdr_info *info,
       {
 	/* We have to count the total number of loaded objects.  */
 	nloaded += GL(dl_ns)[cnt]._ns_nloaded;
-
-	if (caller >= (const void *) CHERI_CAST(l->l_map_start, -1)
-	    && caller < (const void *) CHERI_CAST(l->l_map_end, -1)
+        size_t map_size = l->l_map_end - l->l_map_start;
+	if (caller >= (const void *) CHERI_CAST(l->l_map_start, map_size)
+	    && caller < (const void *) CHERI_CAST(l->l_map_end, 0)
 	    && (l->l_contiguous
 		|| _dl_addr_inside_object (l, (ElfW(Addr)) caller)))
 	  ns = cnt;

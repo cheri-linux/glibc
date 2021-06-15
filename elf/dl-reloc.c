@@ -30,7 +30,6 @@
 
 #include <cheric.h>
 #include <cheri_globals.h>
-// TODO Cheri CHERI_CAST bounds?
 
 /* Statistics function.  */
 #ifdef SHARED
@@ -228,6 +227,7 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
      caps.stop_cap_relocs = (void *)caps.start_cap_relocs + capreloc_size;
      // TODO Cheri: use a different capability then the phdr as base cap
      __cheri_init_globals(cheri_setaddress(cheri_getdefault(), l->l_phdr), l->l_phnum, &caps);
+     l->l_phdr = cheri_csetbounds(l->l_phdr, l->l_phnum * sizeof(ElfW(Phdr)));
    }
   #endif
 
@@ -259,7 +259,7 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 	    newp->len = ALIGN_UP (ph->p_vaddr + ph->p_memsz, GLRO(dl_pagesize))
 			- ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize));
 	    newp->start = PTR_ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize))
-			  + (caddr_t) CHERI_CAST(l->l_addr, -1);
+			  + (caddr_t) CHERI_CAST(l->l_addr, newp->len);
 
 	    if (__mprotect (newp->start, newp->len, PROT_READ|PROT_WRITE) < 0)
 	      {
@@ -322,7 +322,7 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 
     glob_l = l;
     glob_scope = scope;
-    glob_strtab = (const void *) CHERI_CAST(D_PTR (glob_l, l_info[DT_STRTAB]), -1);
+    glob_strtab = (const void *) CHERI_CAST(D_PTR (glob_l, l_info[DT_STRTAB]), l->l_info[DT_STRSZ]->d_un.d_val);
 
 #endif /* NESTING */
 

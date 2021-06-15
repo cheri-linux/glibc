@@ -30,7 +30,7 @@
 #include <dl-irel.h>
 
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_CAST bounds? based on sym type?
 
 #ifdef SHARED
 /* Systems which do not have tls_index also probably have to define
@@ -183,7 +183,7 @@ RTLD_NEXT used in code not dynamically loaded"));
       if (__glibc_unlikely (GLRO(dl_naudit) > 0))
 	{
 	  const char *strtab = (const char *) CHERI_CAST(D_PTR (result,
-						     l_info[DT_STRTAB]), -1);
+						     l_info[DT_STRTAB]), result->l_info[DT_STRSZ]->d_un.d_val);
 	  /* Compute index of the symbol entry in the symbol table of
 	     the DSO with the definition.  */
 	  unsigned int ndx = (ref - (ElfW(Sym) *) CHERI_CAST(D_PTR (result,

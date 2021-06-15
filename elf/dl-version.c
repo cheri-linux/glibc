@@ -28,7 +28,7 @@
 
 #include <assert.h>
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_CAST bounds? -> versioning
 
 static inline struct link_map *
 __attribute ((always_inline))
@@ -57,7 +57,7 @@ static int
 match_symbol (const char *name, Lmid_t ns, ElfW(Word) hash, const char *string,
 	      struct link_map *map, int verbose, int weak)
 {
-  const char *strtab = (const void *) (CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1));
+  const char *strtab = (const void *) (CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val));
   ElfW(Addr) def_offset;
   ElfW(Verdef) *def;
   /* Initialize to make the compiler happy.  */
@@ -173,7 +173,7 @@ _dl_check_map_versions (struct link_map *map, int verbose, int trace_mode)
   /* If we don't have a string table, we must be ok.  */
   if (map->l_info[DT_STRTAB] == NULL)
     return 0;
-  strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
+  strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val);
 
   dyn = map->l_info[VERSYMIDX (DT_VERNEED)];
   def = map->l_info[VERSYMIDX (DT_VERDEF)];

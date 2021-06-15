@@ -285,7 +285,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	size_t size = sym->st_size;
 	if (__glibc_unlikely (sym->st_size != refsym->st_size))
 	  {
-	    const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), -1);
+	    const char *strtab = (const void *) CHERI_CAST(D_PTR (map, l_info[DT_STRTAB]), map->l_info[DT_STRSZ]->d_un.d_val);
 	    if (sym->st_size > refsym->st_size)
 	      size = refsym->st_size;
 	    if (sym->st_size > refsym->st_size || GLRO(dl_verbose))

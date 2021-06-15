@@ -19,7 +19,7 @@
 #include <dl-load.h>
 
 #include <cheric.h>
-
+// TODO Cheri -> __mmap returns caps ? -> use them?
 /* This implementation assumes (as does the corresponding implementation
    of _dl_unmap_segments, in dl-unmap-segments.h) that shared objects
    are always laid out with all segments contiguous (or with gaps

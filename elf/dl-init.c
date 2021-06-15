@@ -19,7 +19,6 @@
 #include <stddef.h>
 #include <ldsodefs.h>
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
 // TODO Cheri CHERI_FN_CAST bounds?
 
 /* Type of the initializer.  */
@@ -69,8 +68,7 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
 
       /* Cheri note: Unexpectedly, the DT_INIT_ARRAY contains caps and not simple addresses */
       jm = l->l_info[DT_INIT_ARRAYSZ]->d_un.d_val / sizeof (init_t *);
-      addrs = (init_t *) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
-      //addrs = (init_t) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, -1));
+      addrs = (init_t *) (CHERI_CAST(init_array->d_un.d_ptr + l->l_addr, l->l_info[DT_INIT_ARRAYSZ]->d_un.d_val));
       for (j = 0; j < jm; ++j)
         #ifndef __CHERI_PURE_CAPABILITY__
         (addrs[j]) (argc, argv, env);
@@ -115,7 +113,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
 	_dl_debug_printf ("\ncalling preinit: %s\n\n",
 			  DSO_FILENAME (main_map->l_name));
 
-      addrs = (ElfW(Addr) *) (CHERI_CAST(preinit_array->d_un.d_ptr + main_map->l_addr, -1));
+      addrs = (ElfW(Addr) *) (CHERI_CAST(preinit_array->d_un.d_ptr + main_map->l_addr, preinit_array_size->d_un.d_val));
       for (cnt = 0; cnt < i; ++cnt)
         ((init_t) CHERI_FN_CAST(addrs[cnt], -1)) (argc, argv, env);
     }

@@ -30,14 +30,21 @@ determine_info (const ElfW(Addr) addr, struct link_map *match, Dl_info *info,
 {
   /* Now we know what object the address lies in.  */
   info->dli_fname = match->l_name;
-  info->dli_fbase = (void *) CHERI_CAST(match->l_map_start, -1);
+  info->dli_fbase = (void *) CHERI_CAST(match->l_map_start, match->l_map_end - match->l_map_start);
   /* If this is the main program the information is incomplete.  */
   if (__builtin_expect (match->l_name[0], 'a') == '\0'
       && match->l_type == lt_executable)
     info->dli_fname = _dl_argv[0];
 
-  const ElfW(Sym) *symtab = (const ElfW(Sym) *) CHERI_CAST(D_PTR (match, l_info[DT_SYMTAB]), -1);
-  const char *strtab = (const char *) CHERI_CAST(D_PTR (match, l_info[DT_STRTAB]), -1);
+  // TODO Cheri tighter bounds?
+  size_t symtab_length = -1;
+  if (D_PTR (match, l_info[DT_HASH]) != NULL) {
+    symtab_length = D_PTR (match, l_info[DT_HASH]) - D_PTR (match, l_info[DT_SYMTAB]);
+  } else if (D_PTR (match, l_info[DT_STRTAB]) != NULL) {
+    symtab_length = D_PTR (match, l_info[DT_STRTAB]) -  D_PTR (match, l_info[DT_SYMTAB]); 
+  }
+  const ElfW(Sym) *symtab = (const ElfW(Sym) *) CHERI_CAST(D_PTR (match, l_info[DT_SYMTAB]), symtab_length);
+  const char *strtab = (const char *) CHERI_CAST(D_PTR (match, l_info[DT_STRTAB]), match->l_info[DT_STRSZ]->d_un.d_val);
 
   ElfW(Word) strtabsize = match->l_info[DT_STRSZ]->d_un.d_val;
 
@@ -76,6 +83,7 @@ determine_info (const ElfW(Addr) addr, struct link_map *match, Dl_info *info,
     {
       const ElfW(Sym) *symtabend;
       if (match->l_info[DT_HASH] != NULL)
+      // TODO Cheri: symtab end should not be able to read beyond the dyn symtab- >
         symtabend = (symtab
 		     + ((Elf_Symndx *) CHERI_CAST(D_PTR (match, l_info[DT_HASH]), -1))[1]);
       else

@@ -29,7 +29,7 @@
 #include <dl-irel.h>
 
 #include <cheric.h>
-// TODO Cheri CHERI_CAST bounds?
+// TODO Cheri CHERI_CAST bounds? -> symtable, plt relocs
 
 #if (!ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
     || ELF_MACHINE_NO_REL
@@ -68,7 +68,7 @@ _dl_fixup (
 {
   const ElfW(Sym) *const symtab
     = (const void *) CHERI_CAST(D_PTR (l, l_info[DT_SYMTAB]), -1);
-  const char *strtab = (const void *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), -1);
+  const char *strtab = (const void *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), l->l_info[DT_STRSZ]->d_un.d_val);
 
   const PLTREL *const reloc
     = (const void *) CHERI_CAST((D_PTR (l, l_info[DT_JMPREL]) + reloc_offset), -1);
@@ -91,7 +91,7 @@ _dl_fixup (
       if (l->l_info[VERSYMIDX (DT_VERSYM)] != NULL)
 	{
 	  const ElfW(Half) *vernum =
-	    (const void *) CHERI_CAST(D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]), -1);
+	    (const void *) CHERI_CAST(D_PTR (l, l_info[VERSYMIDX (DT_VERSYM)]), sizeof(ElfW(Half)));
 	  ElfW(Half) ndx = vernum[ELFW(R_SYM) (reloc->r_info)] & 0x7fff;
 	  version = &l->l_versions[ndx];
 	  if (version->hash == 0)
@@ -220,8 +220,8 @@ _dl_profile_fixup (
     {
       /* This is the first time we have to relocate this object.  */
       const ElfW(Sym) *const symtab
-	= (const void *) CHERI_CAST(D_PTR (l, l_info[DT_SYMTAB]), -1);
-      const char *strtab = (const char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), -1);
+	= (const void *) CHERI_CAST(D_PTR (l, l_info[DT_SYMTAB]), D_PTR (l, l_info[DT_HASH]) - D_PTR (l, l_info[DT_SYMTAB]));
+      const char *strtab = (const char *) CHERI_CAST(D_PTR (l, l_info[DT_STRTAB]), l->l_info[DT_STRSZ]->d_un.d_val);
 
       const PLTREL *const reloc
 	= (const void *) (CHERI_CAST(D_PTR (l, l_info[DT_JMPREL]), -1) + reloc_offset);
@@ -325,7 +325,7 @@ _dl_profile_fixup (
 	      reloc_result->enterexit = LA_SYMB_NOPLTENTER | LA_SYMB_NOPLTEXIT;
 
 	      const char *strtab2 = (const void *) CHERI_CAST(D_PTR (result,
-							  l_info[DT_STRTAB]), -1);
+							  l_info[DT_STRTAB]), result->l_info[DT_STRSZ]->d_un.d_val);
 
 	      for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
 		{
@@ -413,7 +413,7 @@ _dl_profile_fixup (
 
       /* Get the symbol name.  */
       const char *strtab = (const void *) CHERI_CAST(D_PTR (reloc_result->bound,
-						 l_info[DT_STRTAB]), -1);
+						 l_info[DT_STRTAB]), reloc_result->bound->l_info[DT_STRSZ]->d_un.d_val);
       const char *symname = strtab + sym.st_name;
 
       /* Keep track of overwritten addresses.  */
@@ -500,7 +500,7 @@ _dl_call_pltexit (struct link_map *l, ElfW(Word) reloc_arg,
 
   /* Get the symbol name.  */
   const char *strtab = (const void *) CHERI_CAST(D_PTR (reloc_result->bound,
-					     l_info[DT_STRTAB]), -1);
+					     l_info[DT_STRTAB]), reloc_result->bound->l_info[DT_STRSZ]->d_un.d_val);
   const char *symname = strtab + sym.st_name;
 
   struct audit_ifaces *afct = GLRO(dl_audit);
