@@ -35,10 +35,10 @@ typedef struct {
 #error Unknown architecture
 #endif
 
-//#undef MIN
-//#undef MAX
-//#define MIN(a, b) ((a) <= (b) ? (a) : (b))
-//#define MAX(a, b) ((a) >= (b) ? (a) : (b))
+#undef MIN
+#undef MAX
+#define MIN(a, b) ((a) <= (b) ? (a) : (b))
+#define MAX(a, b) ((a) >= (b) ? (a) : (b))
 
 //#if __SIZEOF_LONG__ == 8
 //typedef Elf64_Ehdr	ElfW(Ehdr);
@@ -226,7 +226,7 @@ __cheri_init_globals(const ElfW(Phdr) *phdr, ElfW(Word) phnum, __cheri_init_caps
 		    text_end < text_start)
 			__builtin_trap();
 		/* Abort if text and writeable overlap: */
-		if (MAX(writable_start, text_start) <=
+		if (MAX(writable_start, text_start) <
 		    MIN(writable_end, text_end)) {
 			/* TODO: should we allow a single RWX segment? */
 			__builtin_trap();
