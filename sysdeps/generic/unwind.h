@@ -31,6 +31,7 @@ extern "C" {
 
 /* @@@ The IA-64 ABI uses uint64 throughout.  Most places this is
    inefficient for 32-bit and smaller machines.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 typedef unsigned _Unwind_Word __attribute__((__mode__(__unwind_word__)));
 typedef signed _Unwind_Sword __attribute__((__mode__(__unwind_word__)));
 #if defined(__ia64__) && defined(__hpux__)
@@ -45,6 +46,14 @@ typedef unsigned _Unwind_Internal_Ptr __attribute__((__mode__(__pointer__)));
    32-bit machines.  We'll need to provide some other option for
    16-bit machines and for machines with > 8 bits per byte.  */
 typedef unsigned _Unwind_Exception_Class __attribute__((__mode__(__DI__)));
+#else
+#include <stdint.h>
+typedef uintptr_t _Unwind_Word __attribute__((__mode__(__unwind_word__)));
+typedef intptr_t _Unwind_Sword __attribute__((__mode__(__unwind_word__)));
+typedef uintptr_t _Unwind_Ptr __attribute__((__mode__(__pointer__)));
+typedef uintptr_t _Unwind_Internal_Ptr __attribute__((__mode__(__pointer__)));
+typedef uint64_t _Unwind_Exception_Class;
+#endif
 
 /* The unwind interface uses reason codes in several contexts to
    identify the reasons for failures or other actions.  */
