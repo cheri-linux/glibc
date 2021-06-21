@@ -96,6 +96,14 @@ typedef __intcap_t	intptr_t;
 #  define __intptr_t_defined
 # endif
 typedef __uintcap_t	uintptr_t;
+#ifndef _INTCAP_T_DECLARED
+typedef	__intcap_t		intcap_t;
+#define	_INTCAP_T_DECLARED
+#endif
+#ifndef _UINTCAP_T_DECLARED
+typedef	__uintcap_t		uintcap_t;
+#define	_UINTCAP_T_DECLARED
+#endif
 #else
 /* Types for `void *' pointers.  */
 #if __WORDSIZE == 64

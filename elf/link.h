@@ -73,7 +73,11 @@ extern struct r_debug _r_debug;
        if (dyn->d_tag == DT_DEBUG)
 	 r_debug = (struct r_debug *) dyn->d_un.d_ptr;
    */
+#ifndef __cplusplus
 extern ElfW(Dyn) _DYNAMIC[];
+#else
+extern "C" ElfW(Dyn) _DYNAMIC[];
+#endif
 
 /* Structure describing a loaded shared object.  The `l_next' and `l_prev'
    members form a chain of all the shared objects loaded at startup.
@@ -137,7 +141,11 @@ enum
 
 struct dl_phdr_info
   {
+#ifndef __CHERI_PURE_CAPABILITY__
     ElfW(Addr) dlpi_addr;
+#else
+    uintptr_t dlpi_addr;
+#endif
     const char *dlpi_name;
     const ElfW(Phdr) *dlpi_phdr;
     ElfW(Half) dlpi_phnum;
