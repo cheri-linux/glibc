@@ -39,6 +39,7 @@ __libgcc_s_init (void)
      RTLD_NOW will rarely make a difference here because unwinding is
      already in progress, so libgcc_s.so has already been loaded if
      its unwinder is used.  */
+#ifndef LIBUNWIND_SO
   handle = __libc_dlopen_mode (LIBGCC_S_SO, RTLD_NOW | __RTLD_DLOPEN);
 
   if (handle == NULL
@@ -46,15 +47,24 @@ __libgcc_s_init (void)
       || (personality = __libc_dlsym (handle, "__gcc_personality_v0")) == NULL)
     __libc_fatal (LIBGCC_S_SO
                   " must be installed for unwinding to work\n");
+#else
+  handle = __libc_dlopen_mode (LIBUNWIND_SO, RTLD_NOW | __RTLD_DLOPEN);
 
+  if (handle == NULL
+      || (resume = __libc_dlsym (handle, "_Unwind_Resume")) == NULL)
+    __libc_fatal (LIBUNWIND_SO
+                  " must be installed for unwinding to work\n");
+#endif
 #ifdef PTR_MANGLE
   PTR_MANGLE (resume);
 #endif
   __libgcc_s_resume = resume;
+#ifndef LIBUNWIND_SO
 #ifdef PTR_MANGLE
   PTR_MANGLE (personality);
 #endif
   libgcc_s_personality = personality;
+#endif
 }
 
 #if !HAVE_ARCH_UNWIND_RESUME

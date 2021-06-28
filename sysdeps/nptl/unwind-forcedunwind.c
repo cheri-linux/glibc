@@ -48,7 +48,7 @@ pthread_cancel_init (void)
       asm volatile ("" ::: "memory");
       return;
     }
-
+#ifndef LIBUNWIND_SO
   handle = __libc_dlopen_mode (LIBGCC_S_SO, RTLD_NOW | __RTLD_DLOPEN);
 
   if (handle == NULL
@@ -62,11 +62,26 @@ pthread_cancel_init (void)
 #endif
       )
     __libc_fatal (LIBGCC_S_SO " must be installed for pthread_cancel to work\n");
+#else
+  handle = __libc_dlopen_mode (LIBUNWIND_SO, RTLD_NOW | __RTLD_DLOPEN);
 
+  if (handle == NULL
+      || (resume = __libc_dlsym (handle, "_Unwind_Resume")) == NULL
+      || (forcedunwind = __libc_dlsym (handle, "_Unwind_ForcedUnwind"))
+	 == NULL
+      || (getcfa = __libc_dlsym (handle, "_Unwind_GetCFA")) == NULL
+#ifdef ARCH_CANCEL_INIT
+      || ARCH_CANCEL_INIT (handle)
+#endif
+      )
+    __libc_fatal (LIBUNWIND_SO " must be installed for pthread_cancel to work\n");
+#endif
   PTR_MANGLE (resume);
   __libgcc_s_resume = resume;
+#ifndef LIBUNWIND_SO
   PTR_MANGLE (personality);
   libgcc_s_personality = personality;
+#endif
   PTR_MANGLE (forcedunwind);
   libgcc_s_forcedunwind = forcedunwind;
   PTR_MANGLE (getcfa);

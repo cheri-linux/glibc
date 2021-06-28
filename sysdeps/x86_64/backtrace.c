@@ -50,6 +50,7 @@ dummy_getcfa (struct _Unwind_Context *ctx __attribute__ ((unused)))
 static void
 init (void)
 {
+#ifndef LIBUNWIND_SO
   libgcc_handle = __libc_dlopen (LIBGCC_S_SO);
 
   if (libgcc_handle == NULL)
@@ -61,6 +62,19 @@ init (void)
     unwind_backtrace = NULL;
   unwind_getcfa = (__libc_dlsym (libgcc_handle, "_Unwind_GetCFA")
 		  ?: dummy_getcfa);
+#else
+  libgcc_handle = __libc_dlopen (LIBUNWIND_SO);
+
+  if (libgcc_handle == NULL)
+    return;
+
+  unwind_backtrace = __libc_dlsym (libgcc_handle, "_Unwind_Backtrace");
+  unwind_getip = __libc_dlsym (libgcc_handle, "_Unwind_GetIP");
+  if (unwind_getip == NULL)
+    unwind_backtrace = NULL;
+  unwind_getcfa = (__libc_dlsym (libgcc_handle, "_Unwind_GetCFA")
+		  ?: dummy_getcfa);
+#endif
 }
 #else
 # define unwind_backtrace _Unwind_Backtrace
