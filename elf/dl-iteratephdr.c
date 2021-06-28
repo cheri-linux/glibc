@@ -64,7 +64,8 @@ __dl_iterate_phdr (int (*callback) (struct dl_phdr_info *info,
 
   for (l = GL(dl_ns)[ns]._ns_loaded; l != NULL; l = l->l_next)
     {
-      info.dlpi_addr = l->l_real->l_addr;
+      // TODO Cheri: long term -> make l_real information to uinptr_t/caps
+      info.dlpi_addr = (uintptr_t) CHERI_CAST(l->l_real->l_addr, l->l_map_end - l->l_map_start) ;
       info.dlpi_name = l->l_real->l_name;
       info.dlpi_phdr = l->l_real->l_phdr;
       info.dlpi_phnum = l->l_real->l_phnum;
