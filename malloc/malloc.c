@@ -472,7 +472,8 @@ void *(*__morecore)(ptrdiff_t) = __default_morecore;
 #ifdef _BOUNDS
 static void *bound_ptr(void *p, size_t nbytes)
 {
-	p = cheri_andperm(cheri_csetbounds(p, nbytes),
+        if (p)
+	  p = cheri_andperm(cheri_csetbounds(p, nbytes),
 			CHERI_PERMS_USERSPACE_DATA & ~CHERI_PERM_CHERIABI_VMMAP);
 	return p;
 }
