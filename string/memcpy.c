@@ -75,8 +75,6 @@ memcpy (void *dstpp, const void *srcpp, size_t len)
 		// source and destination are aligned
 		for (; len >= __CAP_SIZE;  s += __CAP_SIZE, d += __CAP_SIZE, len -= __CAP_SIZE) {
 			*(void**)d = *(void**)s;
-			if (cheri_gettag(*(void**)s) && !cheri_gettag(*(void**)d))
-				__builtin_trap();
 		}
 	}
 	for (; len; len--) *d++ = *s++;
