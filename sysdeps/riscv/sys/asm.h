@@ -25,6 +25,10 @@
 # define SZREG	8
 # define REG_S sd
 # define REG_L ld
+#ifdef __CHERI_PURE_CAPABILITY__
+# define CREG_S csd
+# define CREG_L cld
+#endif
 #elif __riscv_xlen == 32
 # error "rv32i-based targets are not supported"
 #else
@@ -38,6 +42,10 @@
 #  define FREG_L fld
 #  define FREG_S fsd
 #  define SZFREG 8
+#ifdef __CHERI_PURE_CAPABILITY__
+# define CFREG_S cfsd
+# define CFREG_L cfld
+#endif
 # else
 #  error unsupported FLEN
 # endif
