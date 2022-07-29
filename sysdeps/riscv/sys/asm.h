@@ -66,6 +66,10 @@ symbol:						\
 		.size	function,.-function
 
 /* Stack alignment.  */
+#ifndef __CHERI_PURE_CAPABILITY__
 #define ALMASK	~15
+#else
+#define ALMASK ~31
+#endif
 
 #endif /* sys/asm.h */

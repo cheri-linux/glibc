@@ -43,6 +43,7 @@
    __libc_start_main wants this in a5.  */
 
 ENTRY (ENTRY_POINT)
+#ifndef __CHERI_PURE_CAPABILITY__
 	call  .Lload_gp
 	mv    a5, a0  /* rtld_fini.  */
 	/* main may be in a shared library.  */
@@ -55,6 +56,37 @@ ENTRY (ENTRY_POINT)
 	mv    a6, sp  /* stack_end.  */
 
 	tail  __libc_start_main@plt
+#else
+   cllc cra, .Lload_gp
+   cjalr cra
+   // auipcc cra, %pcrel_hi(.Lload_gp)
+   // cjalr cra, cra, %pcrel_lo(.Lload_gp)
+	cmove    ca5, ca0  /* rtld_fini.  */
+	/* main may be in a shared library.  */
+	cllc   ca0, main
+	CREG_L a1, 0(csp)      /* argc.  */
+   // the following might be unaligned... (SZREG is 8 at the moment)
+
+   /* argv */
+	cincoffset ca2, csp, SZREG /* increment over argc */
+   /* Align to reach argv */
+   cgetaddr t0, ca2
+   addi  t0, t0, 15
+	andi  t0, t0, ~15
+   csetaddr ca2, ca2, t0
+
+   /* Align stack for calling __libc_start_main*/
+   cgetaddr t0, csp
+	andi  t0, t0, ALMASK
+   csetaddr csp, csp, t0
+
+	cllc   ca3, __libc_csu_init
+	cllc   ca4, __libc_csu_fini
+	cmove ca6, csp  /* stack_end.  */
+
+   clgc ct1, __libc_start_main
+   cjr ct1
+#endif
 END (ENTRY_POINT)
 
 /* Dynamic links need the global pointer to be initialized prior to calling
@@ -66,9 +98,15 @@ END (ENTRY_POINT)
 .Lload_gp:
 .option push
 .option norelax
+#ifndef __CHERI_PURE_CAPABILITY__
 	lla   gp, __global_pointer$
 .option pop
 	ret
+#else
+   cllc cgp, __global_pointer$
+.option pop
+	cret
+#endif
 
 	.section .preinit_array,"aw"
 	.dc.a .Lload_gp
